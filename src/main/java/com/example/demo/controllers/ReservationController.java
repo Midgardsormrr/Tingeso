@@ -1,0 +1,48 @@
+// ======= RESERVATION CONTROLLER =======
+package com.example.demo.controllers;
+
+import com.example.demo.entities.ReservationEntity;
+import com.example.demo.services.ReservationService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
+@RestController
+@RequestMapping("/reservations")
+public class ReservationController {
+    @Autowired
+    private ReservationService reservationService;
+
+    @GetMapping
+    public ArrayList<ReservationEntity> getAllReservations() {
+        return reservationService.getReservations();
+    }
+
+    @PostMapping
+    public ReservationEntity createReservation(@RequestBody ReservationEntity reservation) {
+        return reservationService.saveReservation(reservation);
+    }
+
+    @GetMapping("/{code}")
+    public ReservationEntity getByCode(@PathVariable Long Id) {
+        return reservationService.getReservationById(Id);
+    }
+
+    @GetMapping("/date/{date}")
+    public List<ReservationEntity> getByDate(@PathVariable String date) {
+        return reservationService.getReservationsByDate(LocalDate.parse(date));
+    }
+
+    @PutMapping
+    public ReservationEntity updateReservation(@RequestBody ReservationEntity reservation) {
+        return reservationService.updateReservation(reservation);
+    }
+
+    @DeleteMapping("/{id}")
+    public boolean deleteReservation(@PathVariable Long id) throws Exception {
+        return reservationService.deleteReservation(id);
+    }
+}

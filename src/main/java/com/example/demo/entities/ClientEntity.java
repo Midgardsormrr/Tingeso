@@ -14,8 +14,8 @@ import java.time.LocalDate;
 @Table(name = "clients")
 public class ClientEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "rut", length = 12, nullable = false, unique = true)
+    private String rut;
     private String name;
     private String email;
     private LocalDate birthDate;
