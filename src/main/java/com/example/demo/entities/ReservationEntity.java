@@ -38,4 +38,9 @@ public class ReservationEntity {
     // Objeto PaymentReceipt asociado
     @Transient
     private PaymentReceiptEntity paymentReceipt;
+
+    public LocalDateTime getStartDateTime() {
+        return startDateTime;
+    }
+
 }

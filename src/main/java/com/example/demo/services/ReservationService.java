@@ -29,9 +29,13 @@ public class ReservationService {
     }
 
     public List<ReservationEntity> getReservationsByDate(LocalDate date) {
-        return reservationRepository.findAll().stream()
-                .filter(r -> r.getStartDateTime().toLocalDate().equals(date))
-                .collect(Collectors.toList());
+        List<ReservationEntity> list = new ArrayList<>();
+        for (ReservationEntity r : reservationRepository.findAll()) {
+            if (r.getStartDateTime().toLocalDate().equals(date)) {
+                list.add(r);
+            }
+        }
+        return list;
     }
 
     public ReservationEntity updateReservation(ReservationEntity reservation) {

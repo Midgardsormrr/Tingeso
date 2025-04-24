@@ -8,5 +8,5 @@ import java.util.Optional;
 
 @Repository
 public interface KartRepository extends JpaRepository<KartEntity, Long> {
-    Optional<Object> findById(String id);
+
 }

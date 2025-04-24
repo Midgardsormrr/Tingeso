@@ -24,14 +24,14 @@ public class KartController {
         return kartService.saveKart(kart);
     }
 
-    @GetMapping("/{code}")
-    public KartEntity getKart(@PathVariable String code) {
-        return kartService.getKartByCode(code);
+    @GetMapping("/{Id}")
+    public KartEntity getKart(@PathVariable Long Id) {
+        return kartService.getKartById(Id);
     }
 
-    @PutMapping("/{code}/status")
-    public KartEntity updateStatus(@PathVariable String code, @RequestParam String status) {
-        return kartService.updateKartStatus(code, status);
+    @PutMapping("/{Id}/status")
+    public KartEntity updateStatus(@PathVariable Long Id, @RequestParam String status) {
+        return kartService.updateKartStatus(Id, status);
     }
 
     @DeleteMapping("/{id}")

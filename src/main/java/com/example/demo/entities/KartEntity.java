@@ -18,4 +18,9 @@ public class KartEntity {
     private Long id;
     private String code;                 // K001, K002, …
     private String status;               // AVAILABLE, UNDER_MAINTENANCE
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
 }
+
