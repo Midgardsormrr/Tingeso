@@ -21,7 +21,7 @@ public class ReservationController {
         return reservationService.getReservations();
     }
 
-    @PostMapping
+    @PostMapping("/create")
     public ReservationEntity createReservation(@RequestBody ReservationEntity reservation) {
         return reservationService.saveReservation(reservation);
     }
@@ -45,4 +45,5 @@ public class ReservationController {
     public boolean deleteReservation(@PathVariable Long id) throws Exception {
         return reservationService.deleteReservation(id);
     }
+
 }

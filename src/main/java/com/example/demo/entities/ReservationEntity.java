@@ -1,12 +1,14 @@
 package com.example.demo.entities;
 
-import jakarta.persistence.*;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+
 @Entity
 @Table(name = "reservations")
 @Data
@@ -28,12 +30,16 @@ public class ReservationEntity {
     private String status;               // CONFIRMED, CANCELLED
 
     // Lista de objetos Cliente
-    @Transient
-    private List<ClientEntity> clients;
+    @ElementCollection
+    @CollectionTable(name = "reservation_clients", joinColumns = @JoinColumn(name = "reservation_id"))
+    @Column(name = "client_rut")
+    private List<String> clientRuts;
 
     // Objeto Kart reservado
-    @Transient
-    private List<KartEntity> karts;
+    @ElementCollection
+    @CollectionTable(name = "reservation_karts", joinColumns = @JoinColumn(name = "reservation_id"))
+    @Column(name = "kart_code")
+    private List<String> kartCodes;
 
     // Objeto PaymentReceipt asociado
     @Transient
