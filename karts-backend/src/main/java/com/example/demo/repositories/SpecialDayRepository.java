@@ -9,8 +9,11 @@ import java.util.Optional;
 
 @Repository
 public interface SpecialDayRepository extends JpaRepository<SpecialDayEntity, Long> {
-    Optional<Object> findByDate(LocalDate localDate);
 
     boolean existsByDate(LocalDate date);
+
+    SpecialDayEntity findByDate(LocalDate localDate);
+
+    SpecialDayEntity findByType(String weekend);
 
 }

@@ -19,7 +19,7 @@ public class SpecialDayService {
     }
 
     public SpecialDayEntity getSpecialDayByDate(LocalDate date) {
-        return (SpecialDayEntity) specialDayRepository.findByDate(date).orElse(null);
+        return (SpecialDayEntity) specialDayRepository.findByDate(date);
     }
 
     public boolean isSpecialDay(LocalDate date) {
