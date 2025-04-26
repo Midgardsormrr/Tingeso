@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,86 +33,110 @@ public class PaymentReceiptService {
         int people = reservation.getNumberOfPeople();
         LocalDate reservationDate = reservation.getStartDateTime().toLocalDate();
 
+        // 1) Precio base por persona
         Float totalPrice = pricingRepository.getTotalPriceByLaps(laps);
         if (totalPrice == null) {
             throw new RuntimeException("No hay precio configurado para esta cantidad de vueltas");
         }
         float basePricePerPerson = totalPrice / people;
+        System.out.println("Precio base por persona: " + basePricePerPerson);
 
-        // >>>> AÑADIMOS LÓGICA PARA APLICAR PRECIO POR FIN DE SEMANA O FERIADO <<<<
+        // 2) Multiplicador por día especial (fin de semana o feriado)
         DayOfWeek day = reservationDate.getDayOfWeek();
-        float priceMultiplier = 1.0f; // Valor por defecto
-
+        float priceMultiplier = 1.0f;
         if (day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY) {
-            SpecialDayEntity weekendSpecial = specialDayRepository.findByType("WEEKEND");
-            if (weekendSpecial != null) {
-                priceMultiplier = (float) weekendSpecial.getPriceMultiplier();
+            SpecialDayEntity weekend = specialDayRepository.findByType("WEEKEND");
+            if (weekend != null) {
+                priceMultiplier = (float) weekend.getPriceMultiplier();
+                System.out.println("Aplicado multiplicador de fin de semana: " + priceMultiplier);
             }
         } else {
-            SpecialDayEntity holidaySpecial = specialDayRepository.findByDate(reservationDate);
-            if (holidaySpecial != null) {
-                priceMultiplier = (float) holidaySpecial.getPriceMultiplier();
+            SpecialDayEntity holiday = specialDayRepository.findByDate(reservationDate);
+            if (holiday != null) {
+                priceMultiplier = (float) holiday.getPriceMultiplier();
+                System.out.println("Aplicado multiplicador de feriado: " + priceMultiplier);
             }
         }
+        float priceAfterDayMultiplier = basePricePerPerson * priceMultiplier;
+        System.out.println("Precio después de multiplicador de día especial: " + priceAfterDayMultiplier);
 
-        float finalPricePerPerson = basePricePerPerson * priceMultiplier;
-        // >>>> FIN DE LÓGICA PRECIO POR DIA ESPECIAL<<<<
+        // 3) % descuento grupal
+        float groupDiscount;
+        if (people >= 3 && people <= 5) groupDiscount = 10f;
+        else if (people >= 6 && people <= 10) groupDiscount = 20f;
+        else if (people >= 11 && people <= 15) groupDiscount = 30f;
+        else groupDiscount = 0f;
 
-        // Determinar el porcentaje de descuento según la cantidad de personas
-        float groupDiscountPercentage;
-        if (people >= 3 && people <= 5) {
-            groupDiscountPercentage = 10.0f;
-        } else if (people >= 6 && people <= 10) {
-            groupDiscountPercentage = 20.0f;
-        } else if (people >= 11 && people <= 15) {
-            groupDiscountPercentage = 30.0f;
-        } else {
-            groupDiscountPercentage = 0.0f;
-        }
+        System.out.println("Descuento grupal: " + groupDiscount + "%");
 
+        // 4) Obtener todos los clientes
         List<ClientEntity> clients = clientRepository.findByRutIn(reservation.getClientRuts());
         if (clients.isEmpty()) {
             throw new RuntimeException("No se encontraron clientes para esta reserva");
         }
 
-        PaymentReceiptEntity paymentReceipt = new PaymentReceiptEntity();
-        paymentReceipt.setReservationCode(reservation.getReservationCode());
-        paymentReceipt.setReservationDateTime(reservation.getStartDateTime());
-        paymentReceipt.setLaps(laps);
-        paymentReceipt.setNumberOfPeople(people);
-        paymentReceipt.setReservedBy(clients.get(0).getName());
+        // 5) Lógica cumpleañeros: cuántos pueden recibir el multiplicador "BIRTHDAY"
+        SpecialDayEntity birthdaySpecial = specialDayRepository.findByType("BIRTHDAY");
+        if (birthdaySpecial == null) {
+            System.out.println("No se encontró un especial de cumpleaños en la base de datos.");
+        } else {
+            System.out.println("Multiplicador de cumpleaños: " + birthdaySpecial.getPriceMultiplier());
+        }
 
-        List<PaymentDetailEntity> paymentDetails = clients.stream().map(client -> {
-            PaymentDetailEntity detail = new PaymentDetailEntity();
-            detail.setClientName(client.getName());
+        int maxBirthday = 0;
+        if (people >= 3 && people <= 5) maxBirthday = 1;
+        else if (people >= 6 && people <= 10) maxBirthday = 2;
 
-            // Aplicar descuento por grupo
-            float priceAfterGroupDiscount = finalPricePerPerson * (1 - groupDiscountPercentage / 100.0f);
+        Set<String> birthdayNames = clients.stream()
+                .filter(c -> c.getBirthDate() != null
+                        && c.getBirthDate().getMonth() == reservationDate.getMonth()
+                        && c.getBirthDate().getDayOfMonth() == reservationDate.getDayOfMonth())
+                .limit(maxBirthday)
+                .map(ClientEntity::getName)
+                .collect(Collectors.toSet());
 
-            // Determinar el porcentaje de descuento por cliente frecuente
-            float frequencyDiscountPercentage = 0.0f;
+        System.out.println("Cumpleañeros: " + birthdayNames);
+
+        // 6) Construir detalles de pago
+        List<PaymentDetailEntity> details = clients.stream().map(client -> {
+            PaymentDetailEntity d = new PaymentDetailEntity();
+            d.setClientName(client.getName());
+
+            // 6.1 aplica descuento grupal
+            float p1 = priceAfterDayMultiplier * (1 - groupDiscount / 100f);
+            System.out.println("Precio después de descuento grupal: " + p1);
+
+            // 6.2 aplica descuento frecuencia
             int visits = client.getMonthlyVisitCount();
-            if (visits >= 7) {
-                frequencyDiscountPercentage = 30.0f;
-            } else if (visits >= 5) {
-                frequencyDiscountPercentage = 20.0f;
-            } else if (visits >= 2) {
-                frequencyDiscountPercentage = 10.0f;
+            float freqDisc = visits >= 7 ? 30f : visits >= 5 ? 20f : visits >= 2 ? 10f : 0f;
+            float p2 = p1 * (1 - freqDisc / 100f);
+            System.out.println("Precio después de descuento de frecuencia: " + p2);
+
+            // 6.3 aplica multiplicador cumpleaños si corresponde
+            float p3 = p2;
+            if (birthdayNames.contains(client.getName()) && birthdaySpecial != null) {
+                System.out.println(client.getName() + " tiene descuento de cumpleaños!");
+                p3 = p2 * (float) birthdaySpecial.getPriceMultiplier();
             }
 
-            // Aplicar descuento por cliente frecuente
-            float finalPrice = priceAfterGroupDiscount * (1 - frequencyDiscountPercentage / 100.0f);
-
-            detail.setAmount(finalPrice);
-
-            return detail;
+            d.setAmount(p3);
+            return d;
         }).collect(Collectors.toList());
 
-        paymentReceipt.setPaymentDetails(paymentDetails);
+        // 7) Armar y guardar recibo
+        PaymentReceiptEntity receipt = new PaymentReceiptEntity();
+        receipt.setReservationCode(reservation.getReservationCode());
+        receipt.setReservationDateTime(reservation.getStartDateTime());
+        receipt.setLaps(laps);
+        receipt.setNumberOfPeople(people);
+        receipt.setReservedBy(clients.get(0).getName());
+        receipt.setPaymentDetails(details);
 
-        // al salvar el receipt, cascada guardará también los detalles
-        return paymentReceiptRepository.save(paymentReceipt);
+        return paymentReceiptRepository.save(receipt);
     }
+
+
+
 
 
 
