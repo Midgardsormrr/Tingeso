@@ -18,16 +18,13 @@ public class PaymentDetailService {
         return (ArrayList<PaymentDetailEntity>) detailRepository.findAll();
     }
 
+
     public PaymentDetailEntity savePaymentDetail(PaymentDetailEntity detail) {
         return detailRepository.save(detail);
     }
 
-    public PaymentDetailEntity getPaymentDetailById(Long id) {
-        return detailRepository.findById(id).orElse(null);
-    }
-
-    public List<PaymentDetailEntity> getPaymentDetailsByReceiptId(Long receiptId) {
-        return detailRepository.findByReceiptId(receiptId);
+    public List<PaymentDetailEntity> getPaymentDetailById(Long receiptId) {
+        return detailRepository.findByReceiptId(receiptId);  // Esto debería devolver una lista de PaymentDetailEntity
     }
 
     public PaymentDetailEntity updatePaymentDetail(PaymentDetailEntity detail) {

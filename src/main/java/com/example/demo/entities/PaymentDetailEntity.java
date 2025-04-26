@@ -1,29 +1,25 @@
 package com.example.demo.entities;
 
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "payment_details")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(name = "payment_details")
 public class PaymentDetailEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long receiptId;              // FK a PaymentReceiptEntity.id
     private String clientName;
-    private double basePrice;
-    private double groupDiscount;
-    private double frequentDiscount;
-    private double birthdayDiscount;
-    private double finalAmount;
-    private double tax;
-    private double totalAmount;
+    private float amount;
+
+    // nuevo campo que mapea la columna FK
+    @Column(name = "payment_receipt_id", insertable = false, updatable = false)
+    private Long receiptId;
 }

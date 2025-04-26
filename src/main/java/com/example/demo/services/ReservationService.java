@@ -1,9 +1,7 @@
 // ======= RESERVATION SERVICE =======
 package com.example.demo.services;
 
-import com.example.demo.entities.ClientEntity;
-import com.example.demo.entities.KartEntity;
-import com.example.demo.entities.ReservationEntity;
+import com.example.demo.entities.*;
 import com.example.demo.repositories.ClientRepository;
 import com.example.demo.repositories.KartRepository;
 import com.example.demo.repositories.PricingRepository;

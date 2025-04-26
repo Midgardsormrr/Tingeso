@@ -12,32 +12,22 @@ import java.util.List;
 @Entity
 @Table(name = "payment_receipts")
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 public class PaymentReceiptEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    private String receiptCode;         // Ej: "REC-20231025-001"
-    private LocalDateTime issuedAt;
-
-    // Resumen de la Reserva
     private String reservationCode;
-    private LocalDateTime startDateTime;
-    private LocalDateTime endDateTime;
+    private LocalDateTime reservationDateTime;
     private int laps;
-    private int maxTime;
     private int numberOfPeople;
-    private String reservingClientName;
+    private String reservedBy; // nombre del cliente principal
 
-    // Detalles de pago (no persistidos directamente)
-    @Transient
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "payment_receipt_id")   // <-- aquí
     private List<PaymentDetailEntity> paymentDetails;
 
-    // Totales generales
-    private double subTotal;
-    private double tax;
-    private double totalAmount;
+
 }

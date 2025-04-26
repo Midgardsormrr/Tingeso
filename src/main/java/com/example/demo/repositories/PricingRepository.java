@@ -16,4 +16,6 @@ public interface PricingRepository extends JpaRepository<PricingEntity, Long> {
     Integer getTotalDurationByLaps(@Param("laps") int laps);
 
 
+    Float getTotalPriceByLaps(int laps);
+
 }

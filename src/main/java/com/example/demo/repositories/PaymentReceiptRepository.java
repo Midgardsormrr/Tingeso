@@ -9,4 +9,6 @@ import java.util.Optional;
 @Repository
 public interface PaymentReceiptRepository extends JpaRepository<PaymentReceiptEntity, Long> {
 
+    PaymentReceiptEntity findByReservationCode(String reservationCode);
+
 }

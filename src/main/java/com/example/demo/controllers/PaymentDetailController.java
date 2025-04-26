@@ -25,15 +25,6 @@ public class PaymentDetailController {
         return detailService.savePaymentDetail(detail);
     }
 
-    @GetMapping("/{id}")
-    public PaymentDetailEntity getDetail(@PathVariable Long id) {
-        return detailService.getPaymentDetailById(id);
-    }
-
-    @GetMapping("/receipt/{receiptId}")
-    public List<PaymentDetailEntity> getDetailsByReceipt(@PathVariable Long receiptId) {
-        return detailService.getPaymentDetailsByReceiptId(receiptId);
-    }
 
     @PutMapping
     public PaymentDetailEntity updateDetail(@RequestBody PaymentDetailEntity detail) {
