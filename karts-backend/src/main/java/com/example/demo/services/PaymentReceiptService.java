@@ -52,11 +52,17 @@ public class PaymentReceiptService {
         }).collect(Collectors.toList());
 
         paymentReceipt.setPaymentDetails(paymentDetails);
+
         // al salvar el receipt, cascada guardará también los detalles
         return paymentReceiptRepository.save(paymentReceipt);
     }
 
     public PaymentReceiptEntity getReceiptByReservationCode(String reservationCode) {
         return paymentReceiptRepository.findByReservationCode(reservationCode);
+    }
+
+    // Nuevo método para obtener todos los recibos
+    public List<PaymentReceiptEntity> getAllReceipts() {
+        return paymentReceiptRepository.findAll();
     }
 }

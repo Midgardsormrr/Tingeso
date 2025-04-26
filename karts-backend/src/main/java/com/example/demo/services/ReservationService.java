@@ -130,11 +130,14 @@ public class ReservationService {
         new_reservation.setKartCodes(reservation.getKartCodes());
         new_reservation.setReservationCode("RES-" + LocalDateTime.now().toLocalDate() + "-K" + (int)(Math.random() * 1000));
 
+        // Devolver el recibo como respuesta (contiene datos de reserva y detalles de pago)
+        reservationRepository.save(new_reservation);
 
         PaymentReceiptEntity receipt = paymentReceiptService.generateReceipt(new_reservation);
         paymentReceiptRepository.save(receipt);
-        // Devolver el recibo como respuesta (contiene datos de reserva y detalles de pago)
-        reservationRepository.save(new_reservation);
+
+
+
 
         return new_reservation;
     }
