@@ -12,10 +12,10 @@ import java.util.Optional;
 public interface PricingRepository extends JpaRepository<PricingEntity, Long> {
     Optional<Object> findByLaps(int laps);
 
-    @Query("SELECT SUM(p.totalDuration) FROM PricingEntity p WHERE p.laps = :laps")
+    @Query("SELECT p.basePrice FROM PricingEntity p WHERE p.laps = :laps")
+    Float getTotalPriceByLaps(@Param("laps") int laps);
+
+    @Query("SELECT p.totalDuration FROM PricingEntity p WHERE p.laps = :laps")
     Integer getTotalDurationByLaps(@Param("laps") int laps);
-
-
-    Float getTotalPriceByLaps(int laps);
 
 }

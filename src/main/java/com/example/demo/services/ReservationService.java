@@ -2,11 +2,9 @@
 package com.example.demo.services;
 
 import com.example.demo.entities.*;
-import com.example.demo.repositories.ClientRepository;
-import com.example.demo.repositories.KartRepository;
-import com.example.demo.repositories.PricingRepository;
-import com.example.demo.repositories.ReservationRepository;
+import com.example.demo.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -27,6 +25,10 @@ public class ReservationService {
     private KartRepository kartRepository;
     @Autowired
     private PricingRepository pricingRepository;
+    @Autowired
+    private PaymentReceiptRepository paymentReceiptRepository;
+    @Autowired
+    private PaymentReceiptService paymentReceiptService;
     public ArrayList<ReservationEntity> getReservations() {
         return (ArrayList<ReservationEntity>) reservationRepository.findAll();
     }
@@ -128,6 +130,10 @@ public class ReservationService {
         new_reservation.setKartCodes(reservation.getKartCodes());
         new_reservation.setReservationCode("RES-" + LocalDateTime.now().toLocalDate() + "-K" + (int)(Math.random() * 1000));
 
+
+        PaymentReceiptEntity receipt = paymentReceiptService.generateReceipt(new_reservation);
+        paymentReceiptRepository.save(receipt);
+        // Devolver el recibo como respuesta (contiene datos de reserva y detalles de pago)
         reservationRepository.save(new_reservation);
 
         return new_reservation;
