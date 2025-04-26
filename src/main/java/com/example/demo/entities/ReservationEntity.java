@@ -25,7 +25,6 @@ public class ReservationEntity {
     private LocalDateTime startDateTime;
     private LocalDateTime endDateTime;
     private int laps;
-    private int maxTime;                 // en minutos
     private int numberOfPeople;
     private String status;               // CONFIRMED, CANCELLED
 

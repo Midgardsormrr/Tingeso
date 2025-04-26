@@ -23,4 +23,10 @@ public class PricingController {
     public PricingEntity getByLaps(@PathVariable int laps) {
         return pricingService.getPricingByLaps(laps);
     }
+
+    @GetMapping("/laps/{laps}/duration")
+    public Integer getTotalDurationByLaps(@PathVariable int laps) {
+        return pricingService.getTotalDurationByLaps(laps);
+    }
+
 }

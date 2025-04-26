@@ -6,16 +6,18 @@ import com.example.demo.entities.KartEntity;
 import com.example.demo.entities.ReservationEntity;
 import com.example.demo.repositories.ClientRepository;
 import com.example.demo.repositories.KartRepository;
+import com.example.demo.repositories.PricingRepository;
 import com.example.demo.repositories.ReservationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class ReservationService {
@@ -25,7 +27,8 @@ public class ReservationService {
     private ClientRepository clientRepository;
     @Autowired
     private KartRepository kartRepository;
-
+    @Autowired
+    private PricingRepository pricingRepository;
     public ArrayList<ReservationEntity> getReservations() {
         return (ArrayList<ReservationEntity>) reservationRepository.findAll();
     }
@@ -65,10 +68,30 @@ public class ReservationService {
             throw new RuntimeException("Número de personas inválido (1 a 15 permitido)");
         }
 
+        // Obtener duración total según número de vueltas
+        Integer totalDuration = pricingRepository.getTotalDurationByLaps(reservation.getLaps());
+        if (totalDuration == null) {
+            throw new RuntimeException("No hay configuración de precio para esa cantidad de vueltas");
+        }
+
+        LocalDateTime start = reservation.getStartDateTime();
+        LocalDateTime end = start.plusMinutes(totalDuration);
+
+        // Validar rango horario permitido
+        DayOfWeek day = start.getDayOfWeek();
+        LocalTime startTime = start.toLocalTime();
+        LocalTime openingTime = (day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY)
+                ? LocalTime.of(10, 0)
+                : LocalTime.of(14, 0);
+        LocalTime closingTime = LocalTime.of(22, 0);
+
+        if (startTime.isBefore(openingTime) || end.toLocalTime().isAfter(closingTime)) {
+            throw new RuntimeException("Reserva fuera del horario permitido");
+        }
+
         // Validar colisión de horarios
         List<ReservationEntity> conflictingReservations =
-                reservationRepository.findByStartDateTimeLessThanAndEndDateTimeGreaterThan(
-                        reservation.getEndDateTime(), reservation.getStartDateTime());
+                reservationRepository.findByStartDateTimeLessThanAndEndDateTimeGreaterThan(end, start);
 
         if (!conflictingReservations.isEmpty()) {
             throw new RuntimeException("Horario no disponible. Hay otra reserva que se superpone.");
@@ -79,9 +102,7 @@ public class ReservationService {
             throw new RuntimeException("No ingresaste ningun rut");
         }
 
-        List<String> clientRuts = reservation.getClientRuts(); // Cambiar a getClientRuts, ya que es una lista de Strings
-
-        // Buscar los clientes en la base de datos usando los RUTs
+        List<String> clientRuts = reservation.getClientRuts();
         List<ClientEntity> clientsInDb = clientRepository.findByRutIn(clientRuts);
         if (clientsInDb.size() != clientRuts.size()) {
             return null; // uno o más RUTs no existen
@@ -93,7 +114,6 @@ public class ReservationService {
         }
 
         List<String> kartCodes = reservation.getKartCodes();
-
         List<KartEntity> availableKarts = kartRepository.findByCodeInAndStatus(kartCodes, "AVAILABLE");
         if (availableKarts.size() != kartCodes.size()) {
             throw new RuntimeException("Uno o más karts no están disponibles");
@@ -101,20 +121,18 @@ public class ReservationService {
 
         // Crear y guardar reserva
         ReservationEntity new_reservation = new ReservationEntity();
-        new_reservation.setStartDateTime(reservation.getStartDateTime());
-        new_reservation.setEndDateTime(reservation.getEndDateTime());
+        new_reservation.setStartDateTime(start);
+        new_reservation.setEndDateTime(end);
         new_reservation.setLaps(reservation.getLaps());
-        new_reservation.setMaxTime(reservation.getMaxTime());
         new_reservation.setNumberOfPeople(reservation.getNumberOfPeople());
         new_reservation.setStatus("CONFIRMED");
         new_reservation.setClientRuts(reservation.getClientRuts());
         new_reservation.setKartCodes(reservation.getKartCodes());
         new_reservation.setReservationCode("RES-" + LocalDateTime.now().toLocalDate() + "-K" + (int)(Math.random() * 1000));
 
-
         reservationRepository.save(new_reservation);
-
 
         return new_reservation;
     }
+
 }

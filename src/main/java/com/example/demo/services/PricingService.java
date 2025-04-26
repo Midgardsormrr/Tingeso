@@ -20,4 +20,9 @@ public class PricingService {
     public PricingEntity getPricingByLaps(int laps) {
         return (PricingEntity) pricingRepository.findByLaps(laps).orElse(null);
     }
+
+    public Integer getTotalDurationByLaps(int laps) {
+        return pricingRepository.getTotalDurationByLaps(laps);
+    }
+
 }
