@@ -1,4 +1,3 @@
-// src/components/ClientList.jsx
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import clientService from "../services/client.service";
@@ -15,87 +14,87 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 
 const ClientList = () => {
-  const [clients, setClients] = useState([]);  // Inicializa clients como un arreglo vacío
+  const [clients, setClients] = useState([]);
   const navigate = useNavigate();
 
   const init = () => {
     clientService.getAll()
-  .then(data => { // Ahora data es el array directamente
-    console.log("Clientes cargados.", data);
-    setClients(Array.isArray(data) ? data : []);
-  })
-  .catch(error => {
-    console.error("Error cargando clientes.", error);
-    setClients([]);
-  });
+      .then(data => setClients(Array.isArray(data) ? data : []))
+      .catch(error => console.error("Error cargando clientes.", error));
   };
 
-  useEffect(() => {
-    init();
-  }, []);
+  useEffect(() => { init(); }, []);
 
   const handleDelete = (rut) => {
-    const confirmDelete = window.confirm("¿Está seguro que desea eliminar este cliente?");
-    if (confirmDelete) {
+    if (window.confirm("¿Está seguro que desea eliminar este cliente?")) {
       clientService.remove(rut)
-        .then(response => {
-          console.log("Cliente eliminado.", response.data);
-          init();  // Vuelve a cargar la lista de clientes
-        })
-        .catch(error => {
-          console.error("Error al eliminar cliente.", error);
-        });
+        .then(() => init())
+        .catch(error => console.error("Error al eliminar cliente.", error));
     }
   };
 
-  const handleEdit = (rut) => {
-    navigate(`/client/edit/${rut}`);
-  };
-
   return (
-    <TableContainer component={Paper}>
-      <br />
-      <Link
+    <TableContainer 
+      component={Paper}
+      sx={{
+        width: "100%",
+        height: "calc(100vh - 64px)",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "auto",
+        border: "none",
+        marginTop:"0px"
+      }}
+    >
+      <Button
+        variant="contained"
+        component={Link}
         to="/client/add"
-        style={{ textDecoration: "none", marginBottom: "1rem" }}
+        sx={{ 
+          m: 2,
+          width: "fit-content",
+          alignSelf: "flex-start"
+        }}
+        startIcon={<PersonAddIcon />}
       >
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<PersonAddIcon />}
-        >
-          Añadir Cliente
-        </Button>
-      </Link>
-      <br /><br />
-      <Table sx={{ minWidth: 650 }} size="small" aria-label="tabla de clientes">
-        <TableHead>
-          <TableRow>
-            <TableCell align="left" sx={{ fontWeight: "bold" }}>RUT</TableCell>
-            <TableCell align="left" sx={{ fontWeight: "bold" }}>Nombre</TableCell>
-            <TableCell align="left" sx={{ fontWeight: "bold" }}>Email</TableCell>
-            <TableCell align="center" sx={{ fontWeight: "bold" }}>Nacimiento</TableCell>
-            <TableCell align="center" sx={{ fontWeight: "bold" }}>Visitas/Mes</TableCell>
-            <TableCell align="center" sx={{ fontWeight: "bold" }}>Operaciones</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {clients.length > 0 ? (
-            clients.map((client) => (
-              <TableRow key={client.rut}>
-                <TableCell align="left">{client.rut}</TableCell>
-                <TableCell align="left">{client.name}</TableCell>
-                <TableCell align="left">{client.email}</TableCell>
+        Añadir Cliente
+      </Button>
+
+      
+        <Table sx={{ 
+          minWidth: "100%",
+          tableLayout: "fixed",
+          "& .MuiTableCell-root": {
+            padding: "12px 16px",
+            verticalAlign: "top"
+          }
+        }}>
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ width: "15%", fontWeight: "600" }}>RUT</TableCell>
+              <TableCell sx={{ width: "20%", fontWeight: "600" }}>Nombre</TableCell>
+              <TableCell sx={{ width: "25%", fontWeight: "600" }}>Email</TableCell>
+              <TableCell sx={{ width: "15%", fontWeight: "600" }} align="center">Nacimiento</TableCell>
+              <TableCell sx={{ width: "15%", fontWeight: "600" }} align="center">Visitas/Mes</TableCell>
+              <TableCell sx={{ width: "10%", fontWeight: "600" }} align="center">Operaciones</TableCell>
+            </TableRow>
+          </TableHead>
+          
+          <TableBody>
+            {clients.map((client) => (
+              <TableRow key={client.rut} hover>
+                <TableCell>{client.rut}</TableCell>
+                <TableCell>{client.name}</TableCell>
+                <TableCell>{client.email}</TableCell>
                 <TableCell align="center">{client.birthDate}</TableCell>
                 <TableCell align="center">{client.monthlyVisitCount}</TableCell>
-                <TableCell align="center">
+                <TableCell align="center" sx={{ "& button": { mx: 0.5 } }}>
                   <Button
                     variant="contained"
                     color="info"
                     size="small"
-                    onClick={() => handleEdit(client.rut)}
+                    onClick={() => navigate(`/client/edit/${client.rut}`)}
                     startIcon={<EditIcon />}
-                    style={{ marginRight: "0.5rem" }}
                   >
                     Editar
                   </Button>
@@ -110,16 +109,13 @@ const ClientList = () => {
                   </Button>
                 </TableCell>
               </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={6} align="center">No hay clientes disponibles.</TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+            ))}
+          </TableBody>
+        </Table>
+      
     </TableContainer>
   );
+  
 };
 
 export default ClientList;

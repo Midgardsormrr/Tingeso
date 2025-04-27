@@ -1,36 +1,35 @@
-// src/components/Navbar.jsx
-import * as React from "react";
-import { AppBar, Box, Toolbar, Typography, Button, IconButton } from "@mui/material";
+import { useState } from "react";
+import { AppBar, Toolbar, Typography, Button, IconButton, Box } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import { Link } from "react-router-dom";
-import Sidemenu from "./Sidemenu";
-import { useState } from "react";
+import SideMenu from "./SideMenu"; // Asegúrate que la ruta sea correcta
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
 
+  // Función para abrir/cerrar el menú
   const toggleDrawer = (open) => (event) => {
+    if (event.type === 'keydown' && (event.key === 'Tab' || event.key === 'Shift')) return;
     setOpen(open);
   };
 
   return (
     <Box sx={{ flexGrow: 1 }}>
-      <AppBar position="sticky">
+      <AppBar position="fixed" sx={{ height: 64, bgcolor: "primary.main", zIndex: 1000 }}>
         <Toolbar>
           <IconButton
             size="large"
             edge="start"
             color="inherit"
-            aria-label="menu"
             sx={{ mr: 2 }}
-            onClick={toggleDrawer(true)}
+            onClick={toggleDrawer(true)} // ¡Aquí estaba el error!
           >
             <MenuIcon />
           </IconButton>
 
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             <Link to="/home" style={{ color: "white", textDecoration: "none" }}>
-              SisGR: Sistema de Gestión Remuneraciones
+              Karting System
             </Link>
           </Typography>
 
@@ -40,7 +39,8 @@ export default function Navbar() {
         </Toolbar>
       </AppBar>
 
-      <Sidemenu open={open} toggleDrawer={toggleDrawer} />
+      {/* Pasa el estado y la función al SideMenu */}
+      <SideMenu open={open} toggleDrawer={toggleDrawer} />
     </Box>
   );
 }

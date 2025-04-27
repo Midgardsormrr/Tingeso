@@ -1,4 +1,3 @@
-// src/App.jsx
 import './App.css';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Navbar from './components/Navbar';
@@ -10,15 +9,16 @@ import NotFound from './components/NotFound';
 function App() {
   return (
     <Router>
-      <div className="container">
+      <div className="app-container">
         <Navbar />
-        <Routes>
-          <Route path="/home" element={<Home />} />
-          <Route path="/clients" element={<ClientList />} /> {/* Cambié la ruta aquí */}
-          <Route path="/client/add" element={<AddEditClient />} />
-          <Route path="/client/edit/:rut" element={<AddEditClient />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        
+          <Routes>
+            <Route path="/home" element={<Home />} />
+            <Route path="/clients" element={<ClientList />} />
+            <Route path="/client/add" element={<AddEditClient />} />
+            <Route path="/client/edit/:rut" element={<AddEditClient />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
       </div>
     </Router>
   );
