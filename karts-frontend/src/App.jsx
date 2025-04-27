@@ -5,6 +5,9 @@ import Home from './components/Home';
 import ClientList from './components/ClientList';
 import AddEditClient from './components/AddEditClient';
 import NotFound from './components/NotFound';
+import ReservationList from './components/ReservationList';
+import AddEditReservation from './components/AddEditReservation';
+
 
 function App() {
   return (
@@ -17,6 +20,9 @@ function App() {
             <Route path="/clients" element={<ClientList />} />
             <Route path="/client/add" element={<AddEditClient />} />
             <Route path="/client/edit/:rut" element={<AddEditClient />} />
+            <Route path="/reservations" element={<ReservationList />} />
+            <Route path="/reservations/create" element={<ReservationList />} />
+            <Route path="/reservations" element={<ReservationList />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
       </div>

@@ -1,136 +1,156 @@
-import { useState, useEffect } from "react";
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { TextField, Button, Container, Typography } from "@mui/material";
 import clientService from "../services/client.service";
-import Box from "@mui/material/Box";
-import TextField from "@mui/material/TextField";
-import Button from "@mui/material/Button";
-import FormControl from "@mui/material/FormControl";
-import SaveIcon from "@mui/icons-material/Save";
 
 const AddEditClient = () => {
-  const [rut, setRut] = useState("");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [birthDate, setBirthDate] = useState("");
-  const [monthlyVisitCount, setMonthlyVisitCount] = useState(0);
-  const { id } = useParams();
-  const [titleClientForm, setTitleClientForm] = useState("");
+  const { rut } = useParams();
   const navigate = useNavigate();
+  const [client, setClient] = useState({
+    rut: "",
+    name: "",
+    email: "",
+    birthDate: "",
+    monthlyVisitCount: 0
+  });
 
-  const saveClient = (e) => {
+  // Cargar datos del cliente al montar el componente
+  useEffect(() => {
+    const loadClientData = async () => {
+      if (rut) {
+        try {
+          const response = await clientService.getByRut(rut);
+          const clientData = response.data;
+          
+          // Formatear fecha si es necesario (eliminar tiempo si existe)
+          if (clientData.birthDate) {
+            clientData.birthDate = clientData.birthDate.split('T')[0];
+          }
+          
+          setClient(clientData);
+        } catch (error) {
+          console.error("Error cargando cliente:", error);
+          alert("Error al cargar los datos del cliente");
+          navigate("/clients");
+        }
+      }
+    };
+
+    loadClientData();
+  }, [rut, navigate]);
+
+  const handleInputChange = (e) => {
+    setClient({
+      ...client,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const client = { id, rut, name, email, birthDate, monthlyVisitCount };
-    if (id) {
-      clientService.update(client)
-        .then((response) => {
-          console.log("Cliente ha sido actualizado.", response.data);
-          navigate("/client/list");
-        })
-        .catch((error) => {
-          console.log("Error al actualizar cliente.", error);
-        });
-    } else {
-      clientService.create(client)
-        .then((response) => {
-          console.log("Cliente ha sido añadido.", response.data);
-          navigate("/client/list");
-        })
-        .catch((error) => {
-          console.log("Error al crear cliente.", error);
-        });
+    try {
+      if (rut) {
+        await clientService.update(client);
+        alert("Cliente actualizado exitosamente");
+      } else {
+        await clientService.create(client);
+        alert("Cliente creado exitosamente");
+      }
+      navigate("/clients");
+    } catch (error) {
+      console.error("Error guardando cliente:", error);
+      alert("Error al guardar los cambios");
     }
   };
 
-  useEffect(() => {
-    if (id) {
-      setTitleClientForm("Editar Cliente");
-      clientService.get(id)
-        .then((res) => {
-          const c = res.data;
-          setRut(c.rut);
-          setName(c.name);
-          setEmail(c.email);
-          setBirthDate(c.birthDate);
-          setMonthlyVisitCount(c.monthlyVisitCount);
-        })
-        .catch((error) => {
-          console.log("Error al obtener cliente.", error);
-        });
-    } else {
-      setTitleClientForm("Nuevo Cliente");
-    }
-  }, [id]);
-
   return (
-    <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" component="form">
-      <h3>{titleClientForm}</h3>
-      <hr />
-      <form>
-        <FormControl fullWidth>
-          <TextField
-            id="rut"
-            label="RUT"
-            value={rut}
-            variant="standard"
-            onChange={(e) => setRut(e.target.value)}
-            helperText="Ej. 12.345.678-9"
-          />
-        </FormControl>
+    <Container maxWidth="md" sx={{ mt: 4, 
+      minHeight: '100vh',        // Ocupa toda la altura vertical
+      display: 'auto',           // Activa flexbox
+      flexDirection: 'column',   // Apila elementos verticalmente
+      justifyContent: 'center',  // Centra verticalmente
+      py: 4                      // Padding vertical
+    }}>
+      <Typography variant="h4" gutterBottom>
+        {rut ? "Editar Cliente" : "Nuevo Cliente"}
+      </Typography>
+      
+      <form onSubmit={handleSubmit}>
+        <TextField
+          fullWidth
+          label="RUT"
+          name="rut"
+          value={client.rut}
+          onChange={handleInputChange}
+          margin="normal"
+          required
+          disabled={!!rut} // Deshabilitar RUT en edición
+        />
 
-        <FormControl fullWidth>
-          <TextField
-            id="name"
-            label="Nombre"
-            value={name}
-            variant="standard"
-            onChange={(e) => setName(e.target.value)}
-          />
-        </FormControl>
+        <TextField
+          fullWidth
+          label="Nombre"
+          name="name"
+          value={client.name}
+          onChange={handleInputChange}
+          margin="normal"
+          required
+        />
 
-        <FormControl fullWidth>
-          <TextField
-            id="email"
-            label="Email"
-            type="email"
-            value={email}
-            variant="standard"
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </FormControl>
+        <TextField
+          fullWidth
+          label="Email"
+          name="email"
+          type="email"
+          value={client.email}
+          onChange={handleInputChange}
+          margin="normal"
+          required
+        />
 
-        <FormControl fullWidth>
-          <TextField
-            id="birthDate"
-            label="Fecha de Nacimiento"
-            type="date"
-            value={birthDate}
-            variant="standard"
-            onChange={(e) => setBirthDate(e.target.value)}
-            InputLabelProps={{ shrink: true }}
-          />
-        </FormControl>
+        <TextField
+          fullWidth
+          label="Fecha de Nacimiento"
+          name="birthDate"
+          type="date"
+          value={client.birthDate}
+          onChange={handleInputChange}
+          margin="normal"
+          InputLabelProps={{ shrink: true }}
+          required
+        />
 
-        <FormControl fullWidth>
-          <TextField
-            id="monthlyVisitCount"
-            label="Visitas Mensuales"
-            type="number"
-            value={monthlyVisitCount}
-            variant="standard"
-            onChange={(e) => setMonthlyVisitCount(parseInt(e.target.value, 10))}
-          />
-        </FormControl>
+        <TextField
+          fullWidth
+          label="Visitas por Mes"
+          name="monthlyVisitCount"
+          type="number"
+          value={client.monthlyVisitCount}
+          onChange={handleInputChange}
+          margin="normal"
+          inputProps={{ min: 0 }}
+          required
+        />
 
-        <FormControl>
-          <br />
-          <Button variant="contained" color="primary" onClick={saveClient} startIcon={<SaveIcon />}>
-            Guardar
-          </Button>
-        </FormControl>
+        <Button
+          type="submit"
+          variant="contained"
+          color="primary"
+          sx={{ mt: 3, mr: 2 }}
+        >
+          {rut ? "Actualizar" : "Crear"}
+        </Button>
+
+        <Button
+          variant="contained"
+          color="secondary"
+          sx={{ mt: 3 }}
+          onClick={() => navigate("/clients")}
+        >
+          Cancelar
+        </Button>
       </form>
-      <hr />
-      <Link to="/client/list">Volver a la lista</Link>
-    </Box>
+    </Container>
   );
 };
 

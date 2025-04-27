@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.beans.Transient;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -52,6 +53,7 @@ public class ReservationService {
         return reservationRepository.save(reservation);
     }
 
+    @Transient
     public boolean deleteReservation(Long id) throws Exception {
         try {
             reservationRepository.deleteById(id);

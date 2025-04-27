@@ -29,6 +29,19 @@ export default function Sidemenu({ open, toggleDrawer }) {
           <ListItemIcon><Person /></ListItemIcon>
           <ListItemText primary="Clientes" />
         </ListItemButton>
+
+        {/* Reservas */}
+        <ListItemButton 
+          onClick={() => {
+            navigate("/reservations");
+            toggleDrawer(false);
+          }}
+        >
+          <ListItemIcon><Person /></ListItemIcon>
+          <ListItemText primary="Reservas" />
+        </ListItemButton>
+
+
       </List>
     </Box>
   );

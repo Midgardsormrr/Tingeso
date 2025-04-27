@@ -12,6 +12,7 @@ import Button from "@mui/material/Button";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import Box from "@mui/material/Box"; // Importar Box para el contenedor flexible
 
 const ClientList = () => {
   const [clients, setClients] = useState([]);
@@ -60,41 +61,51 @@ const ClientList = () => {
         Añadir Cliente
       </Button>
 
-      
-        <Table sx={{ 
-          minWidth: "100%",
-          tableLayout: "fixed",
-          "& .MuiTableCell-root": {
-            padding: "12px 16px",
-            verticalAlign: "top"
-          }
-        }}>
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ width: "15%", fontWeight: "600" }}>RUT</TableCell>
-              <TableCell sx={{ width: "20%", fontWeight: "600" }}>Nombre</TableCell>
-              <TableCell sx={{ width: "25%", fontWeight: "600" }}>Email</TableCell>
-              <TableCell sx={{ width: "15%", fontWeight: "600" }} align="center">Nacimiento</TableCell>
-              <TableCell sx={{ width: "15%", fontWeight: "600" }} align="center">Visitas/Mes</TableCell>
-              <TableCell sx={{ width: "10%", fontWeight: "600" }} align="center">Operaciones</TableCell>
-            </TableRow>
-          </TableHead>
-          
-          <TableBody>
-            {clients.map((client) => (
-              <TableRow key={client.rut} hover>
-                <TableCell>{client.rut}</TableCell>
-                <TableCell>{client.name}</TableCell>
-                <TableCell>{client.email}</TableCell>
-                <TableCell align="center">{client.birthDate}</TableCell>
-                <TableCell align="center">{client.monthlyVisitCount}</TableCell>
-                <TableCell align="center" sx={{ "& button": { mx: 0.5 } }}>
+      <Table sx={{ 
+        minWidth: "100%",
+        tableLayout: "fixed",
+        "& .MuiTableCell-root": {
+          padding: "12px 16px",
+          verticalAlign: "top"
+        }
+      }}>
+        <TableHead>
+          <TableRow>
+            <TableCell sx={{ width: "15%", fontWeight: "600" }}>RUT</TableCell>
+            <TableCell sx={{ width: "20%", fontWeight: "600" }}>Nombre</TableCell>
+            <TableCell sx={{ width: "25%", fontWeight: "600" }}>Email</TableCell>
+            <TableCell sx={{ width: "15%", fontWeight: "600" }} align="center">Nacimiento</TableCell>
+            <TableCell sx={{ width: "15%", fontWeight: "600" }} align="center">Visitas/Mes</TableCell>
+            <TableCell sx={{ width: "10%", fontWeight: "600" }} align="center">Operaciones</TableCell>
+          </TableRow>
+        </TableHead>
+        
+        <TableBody>
+          {clients.map((client) => (
+            <TableRow key={client.rut} hover>
+              <TableCell>{client.rut}</TableCell>
+              <TableCell>{client.name}</TableCell>
+              <TableCell>{client.email}</TableCell>
+              <TableCell align="center">{client.birthDate}</TableCell>
+              <TableCell align="center">{client.monthlyVisitCount}</TableCell>
+              <TableCell align="center">
+                <Box sx={{ 
+                  display: "flex",
+                  gap: 1,
+                  justifyContent: "center",
+                  "& .MuiButton-root": {
+                    minWidth: 100, // Ancho mínimo igual
+                    fontSize: "0.75rem",
+                    padding: "6px 12px",
+                    flex: 1 // Ocupar espacio disponible
+                  }
+                }}>
                   <Button
                     variant="contained"
                     color="info"
                     size="small"
                     onClick={() => navigate(`/client/edit/${client.rut}`)}
-                    startIcon={<EditIcon />}
+                    startIcon={<EditIcon fontSize="small" />}
                   >
                     Editar
                   </Button>
@@ -103,19 +114,18 @@ const ClientList = () => {
                     color="error"
                     size="small"
                     onClick={() => handleDelete(client.rut)}
-                    startIcon={<DeleteIcon />}
+                    startIcon={<DeleteIcon fontSize="small" />}
                   >
                     Eliminar
                   </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      
+                </Box>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </TableContainer>
   );
-  
 };
 
 export default ClientList;
