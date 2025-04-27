@@ -4,6 +4,7 @@ package com.example.demo.controllers;
 import com.example.demo.entities.ReservationEntity;
 import com.example.demo.services.ReservationService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -42,6 +43,17 @@ public class ReservationController {
         return reservationService.updateReservation(reservation);
     }
 
+    @GetMapping("/{id}")
+    public ReservationEntity getById(@PathVariable Long id) {
+        ReservationEntity r = reservationService.getReservationById(id);
+        return r;
+    }
+
+    @PutMapping("/{id}")  // coincide con service.update(id,...)
+    public ReservationEntity updateReservation(@PathVariable Long id, @RequestBody ReservationEntity reservation) {
+        reservation.setId(id);
+        return reservationService.updateReservation(reservation);
+    }
     @DeleteMapping("/{id}")
     public boolean deleteReservation(@PathVariable Long id) throws Exception {
         return reservationService.deleteReservation(id);

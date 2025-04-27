@@ -1,18 +1,18 @@
+// src/components/ReservationList.jsx
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link as RouterLink } from "react-router-dom";
 import reservationService from "../services/reservation.service";
-import { 
-  Table, TableBody, TableCell, TableContainer, 
-  TableHead, TableRow, Paper, Button, 
+import {
+  Table, TableBody, TableCell, TableContainer,
+  TableHead, TableRow, Paper, Button,
   Box, Typography, Chip, CircularProgress
 } from "@mui/material";
-import { Add, Edit, Delete } from "@mui/icons-material";
+import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
 
 const ReservationList = () => {
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const navigate = useNavigate();
 
   const loadReservations = async () => {
     try {
@@ -26,8 +26,8 @@ const ReservationList = () => {
     }
   };
 
-  useEffect(() => { 
-    loadReservations(); 
+  useEffect(() => {
+    loadReservations();
   }, []);
 
   const handleDelete = async (id) => {
@@ -49,92 +49,69 @@ const ReservationList = () => {
     return date.toLocaleString('es-CL');
   };
 
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Typography color="error" sx={{ mt: 4, textAlign: 'center' }}>
-        {error}
-      </Typography>
-    );
-  }
+  if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>;
+  if (error)   return <Typography color="error" sx={{ mt: 4, textAlign: 'center' }}>{error}</Typography>;
 
   return (
-    <TableContainer component={Paper}>
+    <TableContainer component={Paper}
+      sx={{ width: "100%", height: "calc(100vh - 64px)", display: "flex", flexDirection: "column", overflow: "auto", border: "none", marginTop: 0 }}>
       <Button
-        variant="contained"
-        component={Link}
+        component={RouterLink}
         to="/reservations/create"
-        sx={{ m: 2 }}
-        startIcon={<Add />}
+        variant="contained"
+        sx={{ m: 2, width: "fit-content", alignSelf: "flex-start" }}
+        startIcon={<AddIcon />}
       >
         Nueva Reserva
       </Button>
 
-      <Table>
+      <Table sx={{ minWidth: "100%", tableLayout: "fixed", "& .MuiTableCell-root": { padding: "12px 16px", verticalAlign: "middle" } }}>
         <TableHead>
           <TableRow>
-            <TableCell>ID</TableCell>
-            <TableCell>Código</TableCell>
-            <TableCell>Clientes</TableCell>
-            <TableCell>Fecha/Hora Inicio</TableCell>
-            <TableCell>Fecha/Hora Término</TableCell>
-            <TableCell>Personas</TableCell>
-            <TableCell>Vueltas</TableCell>
-            <TableCell>Karts</TableCell>
-            <TableCell>Estado</TableCell>
-            <TableCell>Acciones</TableCell>
+            <TableCell sx={{ fontWeight: 600 }}>Código</TableCell>
+            <TableCell sx={{ fontWeight: 600 }}>Clientes</TableCell>
+            <TableCell sx={{ fontWeight: 600 }}>Inicio</TableCell>
+            <TableCell sx={{ fontWeight: 600 }}>Término</TableCell>
+            <TableCell sx={{ fontWeight: 600 }}>Personas</TableCell>
+            <TableCell sx={{ fontWeight: 600 }}>Vueltas</TableCell>
+            <TableCell sx={{ fontWeight: 600 }}>Karts</TableCell>
+            <TableCell sx={{ fontWeight: 600 }}>Estado</TableCell>
+            <TableCell sx={{ fontWeight: 600 }} align="center">Acciones</TableCell>
           </TableRow>
         </TableHead>
-        
         <TableBody>
-          {reservations.map((reservation) => (
-            <TableRow key={reservation.id}>
-              <TableCell>{reservation.id}</TableCell>
-              <TableCell>{reservation.reservationCode}</TableCell>
+          {reservations.map(r => (
+            <TableRow key={r.id} hover>
+              <TableCell>{r.reservationCode || "-"}</TableCell>
               <TableCell>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                  {reservation.clientRuts?.map(rut => (
-                    <Chip key={rut} label={rut} size="small" />
-                  ))}
+                <Box sx={{ display: 'flex', gap: .5, flexWrap: 'wrap' }}>
+                  {r.clientRuts?.map(rut => <Chip key={rut} label={rut} size="small" />)}
                 </Box>
               </TableCell>
-              <TableCell>{formatDateTime(reservation.startDateTime)}</TableCell>
-              <TableCell>{formatDateTime(reservation.endDateTime)}</TableCell>
-              <TableCell>{reservation.numberOfPeople}</TableCell>
-              <TableCell>{reservation.laps}</TableCell>
+              <TableCell>{formatDateTime(r.startDateTime)}</TableCell>
+              <TableCell>{formatDateTime(r.endDateTime)}</TableCell>
+              <TableCell align="center">{r.numberOfPeople}</TableCell>
+              <TableCell align="center">{r.laps}</TableCell>
               <TableCell>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                  {reservation.kartCodes?.map(kart => (
-                    <Chip key={kart} label={kart} size="small" color="primary" />
-                  ))}
+                <Box sx={{ display: 'flex', gap: .5, flexWrap: 'wrap' }}>
+                  {r.kartCodes?.map(k => <Chip key={k} label={k} size="small" color="primary" />)}
                 </Box>
               </TableCell>
               <TableCell>
-                <Chip 
-                  label={reservation.status} 
-                  color={
-                    reservation.status === "CONFIRMED" ? "success" : 
-                    reservation.status === "CANCELLED" ? "error" : "default"
-                  } 
+                <Chip
+                  label={r.status}
+                  color={r.status === 'CONFIRMED' ? 'success' : r.status === 'CANCELLED' ? 'error' : 'default'}
                 />
               </TableCell>
-              <TableCell>
-                <Box sx={{ display: 'flex', gap: 1 }}>
+              <TableCell align="center">
+                <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', '& .MuiButton-root': { minWidth: 100, fontSize: '.75rem', padding: '6px 12px', flex: 1 } }}>
                   <Button
+                    component={RouterLink}
+                    to={`/reservations/edit/${r.id}`}
                     variant="contained"
                     color="info"
                     size="small"
-                    onClick={() => navigate(`/reservations/edit/${reservation.id}`, { 
-                      state: { reservation } 
-                    })}
-                    startIcon={<Edit fontSize="small" />}
+                    startIcon={<EditIcon fontSize="small" />}
                   >
                     Editar
                   </Button>
@@ -142,8 +119,8 @@ const ReservationList = () => {
                     variant="contained"
                     color="error"
                     size="small"
-                    onClick={() => handleDelete(reservation.id)}
-                    startIcon={<Delete fontSize="small" />}
+                    onClick={() => handleDelete(r.id)}
+                    startIcon={<DeleteIcon fontSize="small" />}
                   >
                     Eliminar
                   </Button>

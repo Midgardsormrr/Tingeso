@@ -16,7 +16,7 @@ const create = (reservationData) => {
 };
 
 const update = (reservationData) => {
-  return httpClient.put("/reservations", reservationData)
+  return httpClient.put(`/reservations/${id}`, reservationData)
     .then(res => res.data);
 };
 

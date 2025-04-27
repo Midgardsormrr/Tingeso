@@ -19,6 +19,17 @@ export default function Sidemenu({ open, toggleDrawer }) {
           <ListItemText primary="Inicio" />
         </ListItemButton>
 
+        {/* Karts */}
+        <ListItemButton 
+          onClick={() => {
+            navigate("/karts");
+            toggleDrawer(false);
+          }}
+        >
+          <ListItemIcon><Person /></ListItemIcon>
+          <ListItemText primary="Karts" />
+        </ListItemButton>
+
         {/* Clientes */}
         <ListItemButton 
           onClick={() => {
