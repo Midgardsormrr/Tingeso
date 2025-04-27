@@ -9,10 +9,11 @@ import java.util.Optional;
 
 @Repository
 public interface ClientRepository extends JpaRepository<ClientEntity, Long> {
-    void deleteByRut(String rut);
-    
+
     Optional<Object> findByRut(String rut);
 
     List<ClientEntity> findByRutIn(List<String> clientRuts);
+
+    void deleteByRut(String rut);
 
 }

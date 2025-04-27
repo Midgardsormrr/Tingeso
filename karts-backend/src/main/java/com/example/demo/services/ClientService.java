@@ -3,6 +3,7 @@ package com.example.demo.services;
 
 import com.example.demo.entities.ClientEntity;
 import com.example.demo.repositories.ClientRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -29,11 +30,10 @@ public class ClientService {
     public ClientEntity updateClient(ClientEntity client) {
         return clientRepository.save(client);
     }
-
-    public boolean deleteClient(String rut) throws Exception {
+    @Transactional
+    public void deleteClient(String rut) throws Exception {
         try {
             clientRepository.deleteByRut(rut);
-            return true;
         } catch (Exception e) {
             throw new Exception(e.getMessage());
         }
