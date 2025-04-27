@@ -10,6 +10,7 @@ import java.util.ArrayList;
 
 @RestController
 @RequestMapping("/karts")
+@CrossOrigin("*")
 public class KartController {
     @Autowired
     private KartService kartService;

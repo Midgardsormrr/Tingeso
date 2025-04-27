@@ -11,6 +11,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/discounts")
+@CrossOrigin("*")
 public class DiscountController {
     @Autowired
     private DiscountService discountService;

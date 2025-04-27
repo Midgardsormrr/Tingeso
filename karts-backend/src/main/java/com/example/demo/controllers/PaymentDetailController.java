@@ -11,6 +11,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/payment-details")
+@CrossOrigin("*")
 public class PaymentDetailController {
     @Autowired
     private PaymentDetailService detailService;

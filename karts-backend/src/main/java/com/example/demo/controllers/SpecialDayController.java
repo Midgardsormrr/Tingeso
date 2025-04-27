@@ -11,6 +11,7 @@ import java.util.ArrayList;
 
 @RestController
 @RequestMapping("/special-days")
+@CrossOrigin("*")
 public class SpecialDayController {
     @Autowired
     private SpecialDayService specialDayService;

@@ -10,6 +10,7 @@ import java.util.ArrayList;
 
 @RestController
 @RequestMapping("/pricing")
+@CrossOrigin("*")
 public class PricingController {
     @Autowired
     private PricingService pricingService;

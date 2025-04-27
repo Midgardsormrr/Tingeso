@@ -7,26 +7,25 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
 @RequestMapping("/clients")
-@CrossOrigin("*")  // Permite CORS (útil para frontends)
+@CrossOrigin("*")
 public class ClientController {
 
     @Autowired
     private ClientService clientService;
 
     // GET ALL (ahora con ResponseEntity y List en vez de ArrayList)
-    @GetMapping("/")
+    @GetMapping
     public ResponseEntity<List<ClientEntity>> getAllClients() {
         List<ClientEntity> clients = clientService.getClients();
         return ResponseEntity.ok(clients);  // 200 OK
     }
 
     // POST (con validación implícita en ResponseEntity)
-    @PostMapping("/")
+    @PostMapping
     public ResponseEntity<ClientEntity> createClient(@RequestBody ClientEntity client) {
         ClientEntity savedClient = clientService.saveClient(client);
         return ResponseEntity.ok(savedClient);
@@ -40,7 +39,7 @@ public class ClientController {
     }
 
     // PUT (similar al POST pero para actualizar)
-    @PutMapping("/")
+    @PutMapping
     public ResponseEntity<ClientEntity> updateClient(@RequestBody ClientEntity client) {
         ClientEntity updatedClient = clientService.updateClient(client);
         return ResponseEntity.ok(updatedClient);
