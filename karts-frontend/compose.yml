@@ -1,77 +1,26 @@
 
 services:
-  # Database service
-  db:
-    image: postgres:latest
-    environment:
-      POSTGRES_DB: Karts
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 123456
+  # Nginx for backend load balancing
+  nginx-backend:
+    image: nginx
     ports:
-      - "5433:5432"
+      - "80:80"
+    restart: always
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - backend-network
-
-  # Frontend services
-  frontend1:
-    image: dguerra15/karts-frontend:latest
-    networks:
-      - frontend-network
-
-  frontend2:
-    image: dguerra15/karts-frontend:latest
-    networks:
-      - frontend-network
-
-  frontend3:
-    image: dguerra15/karts-frontend:latest
-    networks:
-      - frontend-network
-
-  # Backend services
-  backend1:
-    image: dguerra15/karts-backend:latest
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/Karts
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: 123456
-      SERVER_PORT: 8090
-    networks:
-      - backend-network
+      - ./nginx-backend.conf:/etc/nginx/nginx.conf
     depends_on:
-      - db
-
-  backend2:
-    image: dguerra15/karts-backend:latest
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/Karts
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: 123456
-      SERVER_PORT: 8090
+      - backend1
+      - backend2
+      - backend3
     networks:
       - backend-network
-    depends_on:
-      - db
-
-  backend3:
-    image: dguerra15/karts-backend:latest
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/Karts
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: 123456
-      SERVER_PORT: 8090
-    networks:
-      - backend-network
-    depends_on:
-      - db
-
+    
   # Nginx for frontend load balancing
   nginx-frontend:
-    image: nginx:latest
+    image: nginx
     ports:
-      - "8070:80"
+      - "8070:8070"
+    restart: always 
     volumes:
       - ./nginx-frontend.conf:/etc/nginx/nginx.conf
     depends_on:
@@ -81,23 +30,90 @@ services:
     networks:
       - frontend-network
 
-  # Nginx for backend load balancing
-  nginx-backend:
-    image: nginx:latest
+
+  # Database service
+  postgres:
+    container_name: kart-postgres
+    image: postgres
+    environment:
+      POSTGRES_PASSWORD: postgres
     ports:
-      - "8090:8090"
+      - "5433:5432"
     volumes:
-      - ./nginx-backend.conf:/etc/nginx/nginx.conf
-    depends_on:
-      - backend1
-      - backend2
-      - backend3
+      - kart-postgres:/var/lib/postgresql/data
     networks:
       - backend-network
 
+# Backend services
+  backend1:
+    image: dguerra15/karts-backend:latest
+    ports:
+      - 8091:8090
+    environment:
+      DB_HOST: kart-postgres
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+    networks:
+      - backend-network
+    depends_on:
+      - postgres
+    
+
+  backend2:
+    image: dguerra15/karts-backend:latest
+    ports:
+      - 8092:8090
+    environment:
+      DB_HOST: kart-postgres
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+    networks:
+      - backend-network
+    depends_on:
+      - postgres
+    
+
+
+  backend3:
+    image: dguerra15/karts-backend:latest
+    ports:
+      - 8093:8090
+    environment:
+      DB_HOST: kart-postgres
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+    networks:
+      - backend-network
+    depends_on:
+      - postgres
+
+  # Frontend services
+  frontend1:
+    image: dguerra15/karts-frontend:latest
+    networks:
+      - frontend-network
+    ports:
+      - "3001:3000"
+
+  frontend2:
+    image: dguerra15/karts-frontend:latest
+    networks:
+      - frontend-network
+    ports:
+      - "3002:3000"
+
+  frontend3:
+    image: dguerra15/karts-frontend:latest
+    networks:
+      - frontend-network
+    ports:
+      - "3003:3000"
 networks:
   frontend-network:
   backend-network:
 
 volumes:
-  postgres_data:
+  kart-postgres:
