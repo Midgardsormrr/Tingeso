@@ -1,0 +1,41 @@
+pipeline {
+    agent any
+    environment {
+        DOCKER_HOST = 'npipe:////./pipe/docker_engine'  // Forzar uso de Docker en Windows
+    }
+    stages {
+        stage('Build frontend') {
+            steps {
+                checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/Midgardsormrr/Tingeso']])
+                dir("karts-frontend") {
+                    bat 'npm install'
+                    bat 'npm run build'
+                }
+            }
+        }
+
+        stage('Push image to Docker Hub') {
+            steps {
+                dir("karts-frontend") {
+                    script {
+                        // Primero configuramos el contexto correcto
+                        bat 'docker context use default'
+
+                        // Luego hacemos login manualmente con credenciales
+                        withCredentials([usernamePassword(
+                            credentialsId: 'docker-credentials',
+                            usernameVariable: 'DOCKER_USER',
+                            passwordVariable: 'DOCKER_PASS'
+                        )]) {
+                            bat "echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin"
+                        }
+
+                        // Finalmente construimos y subimos la imagen
+                        bat 'docker build -t dguerra15/karts-frontend:latest .'
+                        bat 'docker push dguerra15/karts-frontend:latest'
+                    }
+                }
+            }
+        }
+    }
+}
