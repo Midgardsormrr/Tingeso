@@ -21,19 +21,12 @@ pipeline {
             }
         }
 
-        stage('Build docker image'){
-            steps{
-                script{
-                    bat 'docker build -t dguerra15/karts-backend:latest -f karts-backend/Dockerfile .'
-                }
-            }
-        }
         stage('Push image to Docker Hub'){
             steps{
                 dir("karts-backend"){
                     script{
                        withDockerRegistry(credentialsId: 'docker-credentials') {
-                            bat 'docker build -t dguerra15/karts-backend:latest'
+                            bat 'docker build -t dguerra15/karts-backend:latest .'
                             bat 'docker push dguerra15/karts-backend:latest'
                        }
                     }
