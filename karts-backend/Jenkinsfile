@@ -7,7 +7,9 @@ pipeline {
         stage('Build maven'){
             steps{
                 checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/Midgardsormrr/Tingeso']])
-                bat 'mvn clean package'
+                dir("karts-backend"){
+                    bat 'mvn clean package'
+                }
             }
         }
 
