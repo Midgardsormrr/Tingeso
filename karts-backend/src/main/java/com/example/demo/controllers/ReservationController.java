@@ -4,12 +4,15 @@ package com.example.demo.controllers;
 import com.example.demo.entities.ReservationEntity;
 import com.example.demo.services.ReservationService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/reservations")
@@ -57,6 +60,31 @@ public class ReservationController {
     @DeleteMapping("/{id}")
     public boolean deleteReservation(@PathVariable Long id) throws Exception {
         return reservationService.deleteReservation(id);
+    }
+
+    @GetMapping("/report")
+    public ResponseEntity<Map<String, Map<YearMonth, Long>>> generateReport(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end) {
+
+        return ResponseEntity.ok(reservationService.generateRevenueReport(start, end));
+    }
+
+    @GetMapping("/report/people")
+    public ResponseEntity<Map<String, Map<YearMonth, Long>>> generatePeopleReport(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end) {
+
+        return ResponseEntity.ok(reservationService.generatePeopleReport(start, end));
+    }
+
+    @GetMapping("/weekly-schedule")
+    public ResponseEntity<List<Map<String, Object>>> getWeeklySchedule(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end) {
+
+        List<Map<String, Object>> schedule = reservationService.getWeeklySchedule(start, end);
+        return ResponseEntity.ok(schedule);
     }
 
 }

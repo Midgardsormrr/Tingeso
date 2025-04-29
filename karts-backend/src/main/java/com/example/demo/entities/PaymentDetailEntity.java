@@ -19,7 +19,6 @@ public class PaymentDetailEntity {
     private String clientName;
     private float amount;
 
-    // nuevo campo que mapea la columna FK
     @Column(name = "payment_receipt_id", insertable = false, updatable = false)
     private Long receiptId;
 }

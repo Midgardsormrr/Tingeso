@@ -52,6 +52,16 @@ export default function Sidemenu({ open, toggleDrawer }) {
           <ListItemText primary="Reservas" />
         </ListItemButton>
 
+        {/* Schedule */}
+        <ListItemButton 
+          onClick={() => {
+            navigate("/reservations/weekly-schedule");
+            toggleDrawer(false);
+          }}
+        >
+          <ListItemIcon><Person /></ListItemIcon>
+          <ListItemText primary="Calendario" />
+        </ListItemButton>
 
       </List>
     </Box>

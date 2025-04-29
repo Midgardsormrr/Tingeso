@@ -9,12 +9,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.beans.Transient;
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.time.*;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ReservationService {
@@ -143,6 +140,135 @@ public class ReservationService {
 
 
         return new_reservation;
+    }
+
+    public Map<String, Map<YearMonth, Long>> generateRevenueReport(LocalDate startDate, LocalDate endDate) {
+        List<ReservationEntity> reservations = reservationRepository
+                .findByStartDateTimeBetweenAndStatus(
+                        startDate.atStartOfDay(),
+                        endDate.atTime(23, 59, 59),
+                        "CONFIRMED"
+                );
+
+        Map<String, Map<YearMonth, Long>> report = new LinkedHashMap<>();
+
+        // Inicializar estructura para todas las categorías
+        List<String> categories = List.of("10 vueltas o máx 10 min",
+                "15 vueltas o máx 15 min",
+                "20 vueltas o máx 20 min");
+        categories.forEach(cat -> report.put(cat, new TreeMap<>()));
+
+        for (ReservationEntity reservation : reservations) {
+            PaymentReceiptEntity receipt = paymentReceiptRepository
+                    .findByReservationCode(reservation.getReservationCode());
+
+            if (receipt == null) continue;
+
+            YearMonth month = YearMonth.from(reservation.getStartDateTime());
+            String category = getCategoryByLaps(reservation.getLaps());
+
+            // Calcular monto total del recibo
+            double total = receipt.getPaymentDetails().stream()
+                    .mapToDouble(PaymentDetailEntity::getAmount)
+                    .sum();
+
+            // Actualizar reporte
+            report.get(category).merge(month, (long) total, Long::sum);
+        }
+
+        // Calcular totales mensuales y general
+        Map<YearMonth, Long> monthlyTotals = new TreeMap<>();
+        report.forEach((category, months) ->
+                months.forEach((month, amount) ->
+                        monthlyTotals.merge(month, amount, Long::sum)
+                )
+        );
+
+        report.put("TOTAL", monthlyTotals);
+        return report;
+    }
+
+    private String getCategoryByLaps(int laps) {
+        return switch (laps) {
+            case 10 -> "10 vueltas o máx 10 min";
+            case 15 -> "15 vueltas o máx 15 min";
+            case 20 -> "20 vueltas o máx 20 min";
+            default -> throw new IllegalArgumentException("Categoría no válida");
+        };
+    }
+
+    public Map<String, Map<YearMonth, Long>> generatePeopleReport(LocalDate startDate, LocalDate endDate) {
+        List<ReservationEntity> reservations = reservationRepository
+                .findByStartDateTimeBetweenAndStatus(
+                        startDate.atStartOfDay(),
+                        endDate.atTime(23, 59, 59),
+                        "CONFIRMED"
+                );
+
+        Map<String, Map<YearMonth, Long>> report = new LinkedHashMap<>();
+
+        // Categorías basadas en los rangos de descuento grupal
+        List<String> categories = List.of(
+                "1-2 personas",
+                "3-5 personas",
+                "6-10 personas",
+                "11-15 personas"
+        );
+
+        categories.forEach(cat -> report.put(cat, new TreeMap<>()));
+
+        for (ReservationEntity reservation : reservations) {
+            PaymentReceiptEntity receipt = paymentReceiptRepository
+                    .findByReservationCode(reservation.getReservationCode());
+
+            if (receipt == null) continue;
+
+            YearMonth month = YearMonth.from(reservation.getStartDateTime());
+            String category = getCategoryByPeople(reservation.getNumberOfPeople());
+
+            double total = receipt.getPaymentDetails().stream()
+                    .mapToDouble(PaymentDetailEntity::getAmount)
+                    .sum();
+
+            report.get(category).merge(month, (long) total, Long::sum);
+        }
+
+        // Cálculo de totales
+        Map<YearMonth, Long> monthlyTotals = new TreeMap<>();
+        report.forEach((category, months) ->
+                months.forEach((month, amount) ->
+                        monthlyTotals.merge(month, amount, Long::sum)
+                )
+        );
+
+        report.put("TOTAL", monthlyTotals);
+        return report;
+    }
+
+    private String getCategoryByPeople(int numberOfPeople) {
+        return switch (numberOfPeople) {
+            case 1, 2 -> "1-2 personas";
+            case 3, 4, 5 -> "3-5 personas";
+            case 6, 7, 8, 9, 10 -> "6-10 personas";
+            case 11, 12, 13, 14, 15 -> "11-15 personas";
+            default -> throw new IllegalArgumentException("Número de personas no válido: " + numberOfPeople);
+        };
+    }
+
+    public List<Map<String, Object>> getWeeklySchedule(LocalDate startDate, LocalDate endDate) {
+        LocalDateTime start = startDate.atStartOfDay();
+        LocalDateTime end = endDate.atTime(23, 59, 59);
+
+        return reservationRepository
+                .findByStartDateTimeBetweenAndStatus(start, end, "CONFIRMED")
+                .stream()
+                .map(res -> {
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("reservationCode", res.getReservationCode());
+                    response.put("start", res.getStartDateTime());
+                    response.put("end", res.getEndDateTime());
+                    return response;
+                }).collect(Collectors.toList());
     }
 
 }
