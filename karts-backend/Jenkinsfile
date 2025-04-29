@@ -32,7 +32,7 @@ pipeline {
             steps{
                 dir("karts-backend"){
                     script{
-                       withDockerRegistry((credentialsId: 'docker-credentials')) {
+                       withDockerRegistry(credentialsId: 'docker-credentials') {
                             bat 'docker build -t dguerra15/karts-backend:latest .'
                             bat 'docker push dguerra15/karts-backend:latest'
                        }
