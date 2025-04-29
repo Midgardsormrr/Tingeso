@@ -24,7 +24,7 @@ pipeline {
         stage('Build docker image'){
             steps{
                 script{
-                    bat 'docker build -t dguerra15/karts-backend:latest'
+                    bat 'docker build -t dguerra15/karts-backend:latest -f karts-backend/Dockerfile .'
                 }
             }
         }
