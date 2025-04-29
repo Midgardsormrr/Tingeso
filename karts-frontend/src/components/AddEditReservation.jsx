@@ -1,16 +1,22 @@
 // src/components/AddEditReservation.jsx
 import { useEffect, useState } from "react";
-import { useNavigate, useParams, Link as RouterLink } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   TextField, Button, Container, Typography,
-  MenuItem, Box, Chip, Divider, Grid, CircularProgress
+  Box, Chip, Divider, Grid, CircularProgress
 } from "@mui/material";
 import reservationService from "../services/reservation.service";
 
 const AddEditReservation = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [reservation, setReservation] = useState({ startDateTime: "", laps: 10, numberOfPeople: 1, clientRuts: [], kartCodes: [], status: "CONFIRMED" });
+  const [reservation, setReservation] = useState({ 
+    startDateTime: "", 
+    laps: 10, 
+    numberOfPeople: 1, 
+    clientRuts: [], 
+    kartCodes: []
+  });
   const [currentRut, setCurrentRut] = useState("");
   const [currentKart, setCurrentKart] = useState("");
   const [loading, setLoading] = useState(false);
@@ -23,15 +29,30 @@ const AddEditReservation = () => {
           ...data,
           startDateTime: data.startDateTime.split('T')[0] + 'T' + data.startDateTime.split('T')[1].slice(0,5)
         }))
-        .catch(err => { console.error("Error cargando reserva:", err); alert("No se pudo cargar la reserva"); navigate("/reservations"); })
+        .catch(err => { 
+          console.error("Error cargando reserva:", err); 
+          alert("No se pudo cargar la reserva"); 
+          navigate("/reservations"); 
+        })
         .finally(() => setLoading(false));
     }
   }, [id, navigate]);
 
-  const handleAddRut    = () => { if (currentRut && !reservation.clientRuts.includes(currentRut)) { setReservation(prev => ({ ...prev, clientRuts: [...prev.clientRuts, currentRut] })); setCurrentRut(""); }};
+  const handleAddRut = () => { 
+    if (currentRut && !reservation.clientRuts.includes(currentRut)) { 
+      setReservation(prev => ({ ...prev, clientRuts: [...prev.clientRuts, currentRut] })); 
+      setCurrentRut(""); 
+    }
+  };
+
   const handleRemoveRut = rut => setReservation(prev => ({ ...prev, clientRuts: prev.clientRuts.filter(r => r !== rut) }));
-  const handleAddKart   = () => { if (currentKart && !reservation.kartCodes.includes(currentKart)) { setReservation(prev => ({ ...prev, kartCodes: [...prev.kartCodes, currentKart] })); setCurrentKart(""); }};
-  const handleRemoveKart= k   => setReservation(prev => ({ ...prev, kartCodes: prev.kartCodes.filter(x => x !== k) }));
+  const handleAddKart = () => { 
+    if (currentKart && !reservation.kartCodes.includes(currentKart)) { 
+      setReservation(prev => ({ ...prev, kartCodes: [...prev.kartCodes, currentKart] })); 
+      setCurrentKart(""); 
+    }
+  };
+  const handleRemoveKart = k => setReservation(prev => ({ ...prev, kartCodes: prev.kartCodes.filter(x => x !== k) }));
 
   const handleSubmit = async e => {
     e.preventDefault();
@@ -41,8 +62,7 @@ const AddEditReservation = () => {
       laps: reservation.laps,
       numberOfPeople: reservation.numberOfPeople,
       clientRuts: reservation.clientRuts,
-      kartCodes: reservation.kartCodes,
-      status: reservation.status
+      kartCodes: reservation.kartCodes
     };
     try {
       if (id) await reservationService.update(id, dto);
@@ -94,19 +114,6 @@ const AddEditReservation = () => {
               required
               inputProps={{ min: 1, max: 15 }}
             />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <TextField
-              select
-              fullWidth
-              label="Estado"
-              value={reservation.status}
-              onChange={e => setReservation(prev => ({ ...prev, status: e.target.value }))}
-              required
-            >
-              <MenuItem value="CONFIRMED">Confirmada</MenuItem>
-              <MenuItem value="CANCELLED">Cancelada</MenuItem>
-            </TextField>
           </Grid>
 
           <Grid item xs={12}>

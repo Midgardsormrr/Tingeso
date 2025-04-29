@@ -48,7 +48,7 @@ public class ClientController {
     // DELETE (retorna 204 No Content como buena práctica)
     @DeleteMapping("/{rut}")
     public ResponseEntity<Void> deleteClient(@PathVariable String rut) throws Exception {
-        clientService.deleteClient(rut);
+        clientService.deleteClientByRut(rut);
         return ResponseEntity.noContent().build();  // 204 No Content
     }
 }

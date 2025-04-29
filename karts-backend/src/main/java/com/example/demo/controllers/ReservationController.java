@@ -62,7 +62,7 @@ public class ReservationController {
         return reservationService.deleteReservation(id);
     }
 
-    @GetMapping("/report")
+    @GetMapping("/report/by-laps")
     public ResponseEntity<Map<String, Map<YearMonth, Long>>> generateReport(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end) {
@@ -70,7 +70,7 @@ public class ReservationController {
         return ResponseEntity.ok(reservationService.generateRevenueReport(start, end));
     }
 
-    @GetMapping("/report/people")
+    @GetMapping("/report/by-people")
     public ResponseEntity<Map<String, Map<YearMonth, Long>>> generatePeopleReport(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end) {

@@ -11,7 +11,9 @@ import AddEditReservation from './components/AddEditReservation';
 import KartList from './components/KartList';
 import AddEditKart from './components/AddEditKart';
 import WeeklySchedule from './components/WeeklySchedule';
-
+import ReportMain from './components/ReportMain';
+import ReportByLaps from './components/ReportByLaps';
+import ReportByPeople from './components/ReportByPeople';
 function App() {
   return (
     <Router>
@@ -29,6 +31,9 @@ function App() {
           <Route path="/reservations/create" element={<AddEditReservation />} />
           <Route path="/reservations/edit/:id" element={<AddEditReservation />} />
           <Route path="/reservations/weekly-schedule" element={<WeeklySchedule />} />
+          <Route path="/report" element={<ReportMain />} />
+          <Route path="/report/by-laps" element={<ReportByLaps />} />
+          <Route path="/report/by-people" element={<ReportByPeople />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>

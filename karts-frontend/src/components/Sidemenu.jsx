@@ -63,6 +63,17 @@ export default function Sidemenu({ open, toggleDrawer }) {
           <ListItemText primary="Calendario" />
         </ListItemButton>
 
+        {/* Report */}
+        <ListItemButton 
+          onClick={() => {
+            navigate("/report");
+            toggleDrawer(false);
+          }}
+        >
+          <ListItemIcon><Person /></ListItemIcon>
+          <ListItemText primary="Generar Reporte" />
+        </ListItemButton>
+
       </List>
     </Box>
   );

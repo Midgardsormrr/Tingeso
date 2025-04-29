@@ -31,7 +31,6 @@ public class ReservationService {
         return (ArrayList<ReservationEntity>) reservationRepository.findAll();
     }
 
-
     public ReservationEntity getReservationById(Long Id) {
         return reservationRepository.findById(Id).orElse(null);
     }
@@ -45,7 +44,6 @@ public class ReservationService {
         }
         return list;
     }
-
 
     public ReservationEntity updateReservation(ReservationEntity reservation) {
         return reservationRepository.save(reservation);
@@ -105,7 +103,7 @@ public class ReservationService {
         List<String> clientRuts = reservation.getClientRuts();
         List<ClientEntity> clientsInDb = clientRepository.findByRutIn(clientRuts);
         if (clientsInDb.size() != clientRuts.size()) {
-            return null; // uno o más RUTs no existen
+            throw new RuntimeException("Uno o más RUTs no están registrados en el sistema.");
         }
 
         // Validar estado de los karts
@@ -135,10 +133,6 @@ public class ReservationService {
 
         PaymentReceiptEntity receipt = paymentReceiptService.generateReceipt(new_reservation);
         paymentReceiptRepository.save(receipt);
-
-
-
-
         return new_reservation;
     }
 

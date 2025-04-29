@@ -135,15 +135,6 @@ public class PaymentReceiptService {
         return paymentReceiptRepository.save(receipt);
     }
 
-
-
-
-
-
-
-
-
-
     public PaymentReceiptEntity getReceiptByReservationCode(String reservationCode) {
         return paymentReceiptRepository.findByReservationCode(reservationCode);
     }

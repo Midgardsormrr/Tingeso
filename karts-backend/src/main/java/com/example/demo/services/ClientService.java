@@ -31,11 +31,7 @@ public class ClientService {
         return clientRepository.save(client);
     }
     @Transactional
-    public void deleteClient(String rut) throws Exception {
-        try {
-            clientRepository.deleteByRut(rut);
-        } catch (Exception e) {
-            throw new Exception(e.getMessage());
-        }
+    public void deleteClientByRut(String rut) throws Exception {
+        clientRepository.deleteByRut(rut);
     }
 }

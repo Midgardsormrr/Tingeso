@@ -18,7 +18,6 @@ public class PaymentDetailService {
         return (ArrayList<PaymentDetailEntity>) detailRepository.findAll();
     }
 
-
     public PaymentDetailEntity savePaymentDetail(PaymentDetailEntity detail) {
         return detailRepository.save(detail);
     }
