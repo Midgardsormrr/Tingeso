@@ -1,13 +1,16 @@
 pipeline {
     agent any
-    tools{
+    tools {
         maven 'maven'
     }
-    stages{
-        stage('Build maven'){
-            steps{
+    environment {
+        DOCKER_HOST = 'npipe:////./pipe/docker_engine'  // Forzar uso de Docker en Windows
+    }
+    stages {
+        stage('Build maven') {
+            steps {
                 checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/Midgardsormrr/Tingeso']])
-                dir("karts-backend"){
+                dir("karts-backend") {
                     bat 'mvn clean package'
                 }
             }
@@ -15,20 +18,31 @@ pipeline {
 
         stage('Unit Tests') {
             steps {
-                dir("karts-backend"){
+                dir("karts-backend") {
                     bat 'mvn test'
                 }
             }
         }
 
-        stage('Push image to Docker Hub'){
-            steps{
-                dir("karts-backend"){
-                    script{
-                       withDockerRegistry(credentialsId: 'docker-credentials') {
-                            bat 'docker build -t dguerra15/karts-backend:latest .'
-                            bat 'docker push dguerra15/karts-backend:latest'
-                       }
+        stage('Push image to Docker Hub') {
+            steps {
+                dir("karts-backend") {
+                    script {
+                        // Primero configuramos el contexto correcto
+                        bat 'docker context use default'
+
+                        // Luego hacemos login manualmente con credenciales
+                        withCredentials([usernamePassword(
+                            credentialsId: 'docker-credentials',
+                            usernameVariable: 'DOCKER_USER',
+                            passwordVariable: 'DOCKER_PASS'
+                        )]) {
+                            bat "echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin"
+                        }
+
+                        // Finalmente construimos y subimos la imagen
+                        bat 'docker build -t dguerra15/karts-backend:latest .'
+                        bat 'docker push dguerra15/karts-backend:latest'
                     }
                 }
             }
