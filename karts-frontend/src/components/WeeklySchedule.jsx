@@ -1,130 +1,167 @@
-import { useEffect, useState } from 'react';
-import { format, startOfWeek, addDays, parseISO, eachHourOfInterval } from 'date-fns';
+import React, { useState } from 'react';
+import { parseISO, format, isValid } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { getWeeklySchedule } from '../services/schedule.service';
-import './WeeklySchedule.css';
+import { getRevenueReport } from '../services/report.service';
+import './ReportByLaps.css';
 
-const WeeklySchedule = () => {
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [reservations, setReservations] = useState([]);
-  const [loading, setLoading] = useState(true);
+const ReportByLaps = () => {
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [report, setReport] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Obtener semana actual
-  const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 }); // Lunes como primer día
-  const weekEnd = addDays(weekStart, 6);
+  const validateDates = () => {
+    if (!startDate || !endDate) {
+      throw new Error('Ambas fechas son requeridas');
+    }
+    if (new Date(startDate) > new Date(endDate)) {
+      throw new Error('La fecha inicial no puede ser mayor a la final');
+    }
+  };
 
-  // Obtener reservas
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const data = await getWeeklySchedule(
-          format(weekStart, 'yyyy-MM-dd'),
-          format(weekEnd, 'yyyy-MM-dd')
-        );
-        
-        setReservations(data);
-        setLoading(false);
-      } catch (err) {
-        setError(err.message);
-        setLoading(false);
+  const loadReport = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    
+    try {
+      validateDates();
+      
+      const data = await getRevenueReport(startDate, endDate);
+      
+      if (!data || typeof data !== 'object' || Object.values(data).some(entry => typeof entry !== 'object')) {
+        throw new Error('Formato de datos inválido del servidor');
       }
-    };
 
-    fetchData();
-  }, [currentDate]);
+      setReport(data);
+    } catch (e) {
+      console.error('❌ Error:', e);
+      setError(e.message || 'Error al cargar el reporte');
+      setReport(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // Generar días de la semana
-  const weekDays = Array.from({ length: 7 }).map((_, i) => ({
-    date: addDays(weekStart, i),
-    label: format(addDays(weekStart, i), 'EEE dd/MM', { locale: es })
-  }));
+  const hasData = report && typeof report === 'object' && Object.keys(report).length > 0;
 
-  // Generar horas del día (8:00 - 22:00)
-  const timeSlots = eachHourOfInterval({
-    start: new Date().setHours(8, 0),
-    end: new Date().setHours(22, 0)
-  });
-
-  // Organizar reservas por día y hora
-  const groupedReservations = reservations.reduce((acc, reservation) => {
-    const day = format(parseISO(reservation.start), 'yyyy-MM-dd');
-    const hour = format(parseISO(reservation.start), 'HH:mm');
+  const getMonthsData = () => {
+    const monthSet = new Set();
     
-    if (!acc[day]) acc[day] = {};
-    if (!acc[day][hour]) acc[day][hour] = [];
-    
-    acc[day][hour].push(reservation);
-    return acc;
-  }, {});
+    Object.values(report).forEach(mMap => {
+      if (typeof mMap === 'object') {
+        Object.keys(mMap).forEach(m => {
+          if (/^\d{4}-\d{2}$/.test(m)) {
+            monthSet.add(m);
+          }
+        });
+      }
+    });
 
-  if (loading) return <div className="loading">Cargando calendario...</div>;
-  if (error) return <div className="error">Error: {error}</div>;
+    return Array.from(monthSet)
+      .sort()
+      .map(m => {
+        try {
+          const date = parseISO(`${m}-01`);
+          return {
+            key: m,
+            label: isValid(date) 
+              ? format(date, 'LLLL yyyy', { locale: es }) 
+              : `${m} (inválido)`
+          };
+        } catch (e) {
+          return { key: m, label: `${m} (error)` };
+        }
+      });
+  };
+
+  const months = hasData ? getMonthsData() : [];
 
   return (
-    <div className="weekly-schedule-container">
-      <div className="schedule-header">
-        <button 
-          onClick={() => setCurrentDate(prev => addDays(prev, -7))}
-          className="nav-button"
-        >
-          &lt; Semana Anterior
-        </button>
-        
-        <h2>
-          {format(weekStart, 'dd MMM yyyy', { locale: es })} - {format(weekEnd, 'dd MMM yyyy', { locale: es })}
-        </h2>
-        
-        <button 
-          onClick={() => setCurrentDate(prev => addDays(prev, 7))}
-          className="nav-button"
-        >
-          Próxima Semana &gt;
-        </button>
-      </div>
+    <div className="report-container">
+      <h2 className="report-header">Reporte por Vueltas</h2>
 
-      <div className="schedule-grid">
-        {/* Columna de horas */}
-        <div className="time-column">
-          {/* Celda vacía para alinear con encabezado de días */}
-          <div className="day-header empty-header"></div>
-          {timeSlots.map(time => (
-            <div key={time} className="time-slot">
-              {format(time, 'HH:mm')}
-            </div>
-          ))}
+      <form onSubmit={loadReport} className="input-group">
+        <input
+          type="date"
+          value={startDate}
+          onChange={e => setStartDate(e.target.value)}
+          className="date-input"
+          required
+        />
+        <input
+          type="date"
+          value={endDate}
+          onChange={e => setEndDate(e.target.value)}
+          className="date-input"
+          required
+          min={startDate}
+        />
+        <button 
+          type="submit" 
+          className="load-button"
+          disabled={loading}
+        >
+          {loading ? 'Cargando...' : 'Generar Reporte'}
+        </button>
+      </form>
+
+      {error && (
+        <div className="error-message">
+          ⚠️ Error: {error}
         </div>
+      )}
 
-        {/* Grid de días */}
-        {weekDays.map(day => (
-          <div key={day.date} className="day-column">
-            <div className="day-header">{day.label}</div>
-            {timeSlots.map(time => {
-              const formattedDate = format(day.date, 'yyyy-MM-dd');
-              const formattedTime = format(time, 'HH:mm');
-              const slotReservations = groupedReservations[formattedDate]?.[formattedTime] || [];
+      {hasData ? (
+        <>
+          <table className="report-table">
+            <thead>
+              <tr>
+                <th>Categoría</th>
+                {months.map(m => (
+                  <th key={m.key} title={m.key}>{m.label}</th>
+                ))}
+                <th>TOTAL</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(report).map(([category, monthData]) => {
+                const total = months.reduce(
+                  (sum, month) => sum + (Number(monthData[month.key]) || 0),
+                  0
+                );
 
-              return (
-                <div 
-                  key={`${formattedDate}-${formattedTime}`} 
-                  className="time-cell"
-                >
-                  {slotReservations.map(reservation => (
-                    <div 
-                      key={reservation.reservationCode}
-                      className="reservation-block"
-                    >
-                      {reservation.reservationCode}
-                    </div>
-                  ))}
-                </div>
-              );
-            })}
+                return (
+                  <tr 
+                    key={category} 
+                    className={category === 'TOTAL' ? 'total-row' : ''}
+                  >
+                    <td className="category-cell">{category}</td>
+                    {months.map(month => (
+                      <td key={month.key}>
+                        {(Number(monthData[month.key]) || 0).toLocaleString('es-CL')}
+                      </td>
+                    ))}
+                    <td className="total-cell">
+                      {total.toLocaleString('es-CL')}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+
+          <div className="data-debug">
+            <h3>Datos en crudo (debug):</h3>
+            <pre>{JSON.stringify(report, null, 2)}</pre>
           </div>
-        ))}
-      </div>
+        </>
+      ) : (
+        !loading && <p className="no-data">🎈 No hay datos para mostrar</p>
+      )}
     </div>
   );
 };
 
-export default WeeklySchedule;
+export default ReportByLaps;

@@ -57,13 +57,20 @@ const AddEditReservation = () => {
   const handleSubmit = async e => {
     e.preventDefault();
     setLoading(true);
+  
+    const date = new Date(reservation.startDateTime);
+const pad = n => n.toString().padStart(2, '0');
+const dateWithSeconds = `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+
+  
     const dto = {
-      startDateTime: reservation.startDateTime,
+      startDateTime: dateWithSeconds,
       laps: reservation.laps,
       numberOfPeople: reservation.numberOfPeople,
       clientRuts: reservation.clientRuts,
       kartCodes: reservation.kartCodes
     };
+  
     try {
       if (id) await reservationService.update(id, dto);
       else    await reservationService.create(dto);
@@ -72,7 +79,9 @@ const AddEditReservation = () => {
     } catch (err) {
       console.error("Error guardando reserva:", err);
       alert("Error al guardar los cambios");
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (loading) return (<Container sx={{ display:'flex', justifyContent:'center', mt:4 }}><CircularProgress/></Container>);

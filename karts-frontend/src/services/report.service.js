@@ -1,15 +1,16 @@
-import axios from 'axios';
-
-export const getRevenueReport = async (start, end) => {
-    const res = await axios.get(`/report/by-laps`, {
-      params: { startDate: start, endDate: end },
-    });
-    return res.data.data; // <-- Asegura que sea un arreglo
-  };
+// services/report.service.js
+export const getRevenueReport = async (startDate, endDate) => {
+    const response = await fetch(`tu_endpoint?start=${startDate}&end=${endDate}`);
+    
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(error.slice(0, 100)); // Mostrar parte del error
+    }
+    
+    const contentType = response.headers.get('content-type');
+    if (!contentType?.includes('application/json')) {
+      throw new Error('Respuesta no es JSON');
+    }
   
-  export const getPeopleReport = async (start, end) => {
-    const res = await axios.get(`/report/by-people`, {
-      params: { startDate: start, endDate: end },
-    });
-    return res.data.data; // <-- Asegura que sea un arreglo
+    return response.json();
   };

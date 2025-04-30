@@ -11,9 +11,9 @@ const ReportMain = () => {
   const handleNavigate = (type) => {
     // Puedes pasar las fechas por estado global o query params
     if (type === "person") {
-      navigate("/report/by-people", { state: { startDate, endDate } });
+      navigate("/reservations/report/by-people", { state: { startDate, endDate } });
     } else {
-      navigate("/report/by-laps", { state: { startDate, endDate } });
+      navigate("reservations/report/by-laps", { state: { startDate, endDate } });
     }
   };
 

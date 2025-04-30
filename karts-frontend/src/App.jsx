@@ -31,9 +31,9 @@ function App() {
           <Route path="/reservations/create" element={<AddEditReservation />} />
           <Route path="/reservations/edit/:id" element={<AddEditReservation />} />
           <Route path="/reservations/weekly-schedule" element={<WeeklySchedule />} />
-          <Route path="/report" element={<ReportMain />} />
-          <Route path="/report/by-laps" element={<ReportByLaps />} />
-          <Route path="/report/by-people" element={<ReportByPeople />} />
+          <Route path="/reservations/report" element={<ReportMain />} />
+          <Route path="/reservations/report/by-laps" element={<ReportByLaps />} />
+          <Route path="/reservations/report/by-people" element={<ReportByPeople />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
