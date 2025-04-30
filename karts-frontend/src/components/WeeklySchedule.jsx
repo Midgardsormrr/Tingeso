@@ -1,167 +1,144 @@
-import React, { useState } from 'react';
-import { parseISO, format, isValid } from 'date-fns';
+import { useEffect, useState } from 'react';
+import { format, startOfWeek, addDays, eachHourOfInterval, set } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { getRevenueReport } from '../services/report.service';
-import './ReportByLaps.css';
+import { getWeeklySchedule } from '../services/schedule.service';
+import './WeeklySchedule.css';
 
-const ReportByLaps = () => {
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [report, setReport] = useState(null);
-  const [loading, setLoading] = useState(false);
+const WeeklySchedule = () => {
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [reservations, setReservations] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const validateDates = () => {
-    if (!startDate || !endDate) {
-      throw new Error('Ambas fechas son requeridas');
-    }
-    if (new Date(startDate) > new Date(endDate)) {
-      throw new Error('La fecha inicial no puede ser mayor a la final');
-    }
-  };
+  useEffect(() => {
+    const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+    const weekEnd = addDays(weekStart, 6);
 
-  const loadReport = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    
-    try {
-      validateDates();
-      
-      const data = await getRevenueReport(startDate, endDate);
-      
-      if (!data || typeof data !== 'object' || Object.values(data).some(entry => typeof entry !== 'object')) {
-        throw new Error('Formato de datos inválido del servidor');
+    const fetchData = async () => {
+      try {
+        const data = await getWeeklySchedule(
+          format(weekStart, 'yyyy-MM-dd'),
+          format(weekEnd, 'yyyy-MM-dd')
+        );
+        console.log("Datos de reservas recibidos:", data);
+        setReservations(data);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error al obtener reservas:", err);
+        setError(err.message);
+        setLoading(false);
       }
+    };
 
-      setReport(data);
-    } catch (e) {
-      console.error('❌ Error:', e);
-      setError(e.message || 'Error al cargar el reporte');
-      setReport(null);
-    } finally {
-      setLoading(false);
-    }
+    fetchData();
+  }, [currentDate]);
+
+  const calculateDurationHeight = (start, end) => {
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    const durationMinutes = (endDate - startDate) / (1000 * 60);
+    return (durationMinutes / 60) * 60; // 60px por hora
   };
 
-  const hasData = report && typeof report === 'object' && Object.keys(report).length > 0;
+  const calculatePositionOffset = (start) => {
+    const startDate = new Date(start);
+    const minutes = startDate.getMinutes();
+    return (minutes / 60) * 60; // 60px por hora
+  };
 
-  const getMonthsData = () => {
-    const monthSet = new Set();
+  const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+  const weekEnd = addDays(weekStart, 6);
+
+  const timeSlots = eachHourOfInterval({
+    start: set(weekStart, { hours: 8, minutes: 0 }),
+    end: set(weekStart, { hours: 22, minutes: 0 })
+  });
+
+  const weekDays = Array.from({ length: 7 }).map((_, i) => {
+    const date = addDays(weekStart, i);
+    return {
+      date,
+      label: format(date, 'EEE dd/MM', { locale: es })
+    };
+  });
+
+  // Agrupamos las reservas por día y hora
+  const groupedReservations = reservations.reduce((acc, reservation) => {
+    if (!reservation.start) return acc;
     
-    Object.values(report).forEach(mMap => {
-      if (typeof mMap === 'object') {
-        Object.keys(mMap).forEach(m => {
-          if (/^\d{4}-\d{2}$/.test(m)) {
-            monthSet.add(m);
-          }
-        });
-      }
-    });
+    const reservationDate = new Date(reservation.start);
+    const dayKey = format(reservationDate, 'yyyy-MM-dd');
+    const hourKey = format(reservationDate, 'HH:00'); // Agrupamos por hora redondeada
+    
+    acc[dayKey] = acc[dayKey] || {};
+    acc[dayKey][hourKey] = acc[dayKey][hourKey] || [];
+    acc[dayKey][hourKey].push(reservation);
+    
+    return acc;
+  }, {});
 
-    return Array.from(monthSet)
-      .sort()
-      .map(m => {
-        try {
-          const date = parseISO(`${m}-01`);
-          return {
-            key: m,
-            label: isValid(date) 
-              ? format(date, 'LLLL yyyy', { locale: es }) 
-              : `${m} (inválido)`
-          };
-        } catch (e) {
-          return { key: m, label: `${m} (error)` };
-        }
-      });
-  };
-
-  const months = hasData ? getMonthsData() : [];
+  if (loading) return <div className="loading">Cargando calendario…</div>;
+  if (error) return <div className="error">Error: {error}</div>;
 
   return (
-    <div className="report-container">
-      <h2 className="report-header">Reporte por Vueltas</h2>
-
-      <form onSubmit={loadReport} className="input-group">
-        <input
-          type="date"
-          value={startDate}
-          onChange={e => setStartDate(e.target.value)}
-          className="date-input"
-          required
-        />
-        <input
-          type="date"
-          value={endDate}
-          onChange={e => setEndDate(e.target.value)}
-          className="date-input"
-          required
-          min={startDate}
-        />
-        <button 
-          type="submit" 
-          className="load-button"
-          disabled={loading}
-        >
-          {loading ? 'Cargando...' : 'Generar Reporte'}
+    <div className="weekly-schedule-container">
+      <div className="schedule-header">
+        <button onClick={() => setCurrentDate(d => addDays(d, -7))} className="nav-button">
+          &lt; Semana Anterior
         </button>
-      </form>
+        <h2>
+          {format(weekStart, 'dd MMM yyyy', { locale: es })} – {format(weekEnd, 'dd MMM yyyy', { locale: es })}
+        </h2>
+        <button onClick={() => setCurrentDate(d => addDays(d, 7))} className="nav-button">
+          Próxima Semana &gt;
+        </button>
+      </div>
 
-      {error && (
-        <div className="error-message">
-          ⚠️ Error: {error}
+      <div className="schedule-grid">
+        <div className="time-column">
+          <div className="day-header empty-header"></div>
+          {timeSlots.map(t => (
+            <div key={t.toString()} className="time-slot">
+              {format(t, 'HH:mm')}
+            </div>
+          ))}
         </div>
-      )}
 
-      {hasData ? (
-        <>
-          <table className="report-table">
-            <thead>
-              <tr>
-                <th>Categoría</th>
-                {months.map(m => (
-                  <th key={m.key} title={m.key}>{m.label}</th>
-                ))}
-                <th>TOTAL</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Object.entries(report).map(([category, monthData]) => {
-                const total = months.reduce(
-                  (sum, month) => sum + (Number(monthData[month.key]) || 0),
-                  0
-                );
-
-                return (
-                  <tr 
-                    key={category} 
-                    className={category === 'TOTAL' ? 'total-row' : ''}
-                  >
-                    <td className="category-cell">{category}</td>
-                    {months.map(month => (
-                      <td key={month.key}>
-                        {(Number(monthData[month.key]) || 0).toLocaleString('es-CL')}
-                      </td>
-                    ))}
-                    <td className="total-cell">
-                      {total.toLocaleString('es-CL')}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-
-          <div className="data-debug">
-            <h3>Datos en crudo (debug):</h3>
-            <pre>{JSON.stringify(report, null, 2)}</pre>
+        {weekDays.map(day => (
+          <div key={day.date.toString()} className="day-column">
+            <div className="day-header">{day.label}</div>
+            {timeSlots.map(t => {
+              const dayKey = format(day.date, 'yyyy-MM-dd');
+              const hourKey = format(t, 'HH:00');
+              const slotReservations = groupedReservations[dayKey]?.[hourKey] || [];
+              
+              return (
+                <div key={`${dayKey}-${hourKey}`} className="time-cell">
+                  {slotReservations.map(r => (
+                    <div 
+                      key={r.reservationCode}
+                      className="reservation-block"
+                      style={{
+                        height: `${calculateDurationHeight(r.start, r.end)}px`,
+                        top: `${calculatePositionOffset(r.start)}px`
+                      }}
+                    >
+                      <div className="reservation-content">
+                        <span className="reservation-code">{r.reservationCode}</span>
+                        <span className="reservation-time">
+                          {format(new Date(r.start), 'HH:mm')} - {format(new Date(r.end), 'HH:mm')}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
           </div>
-        </>
-      ) : (
-        !loading && <p className="no-data">🎈 No hay datos para mostrar</p>
-      )}
+        ))}
+      </div>
     </div>
   );
 };
 
-export default ReportByLaps;
+export default WeeklySchedule;
