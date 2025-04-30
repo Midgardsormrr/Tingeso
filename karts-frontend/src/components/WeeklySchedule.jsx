@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { format, startOfWeek, addDays, parseISO, eachHourOfInterval, set } from 'date-fns';
+import { format, startOfWeek, addDays, eachHourOfInterval, set } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { getWeeklySchedule } from '../services/schedule.service';
 import './WeeklySchedule.css';
@@ -20,10 +20,11 @@ const WeeklySchedule = () => {
           format(weekStart, 'yyyy-MM-dd'),
           format(weekEnd, 'yyyy-MM-dd')
         );
-        console.log("weekly-schedule response:", data);
+        console.log("Datos de reservas recibidos:", data);
         setReservations(data);
         setLoading(false);
       } catch (err) {
+        console.error("Error al obtener reservas:", err);
         setError(err.message);
         setLoading(false);
       }
@@ -31,6 +32,19 @@ const WeeklySchedule = () => {
 
     fetchData();
   }, [currentDate]);
+
+  const calculateDurationHeight = (start, end) => {
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    const durationMinutes = (endDate - startDate) / (1000 * 60);
+    return (durationMinutes / 60) * 60; // 60px por hora
+  };
+
+  const calculatePositionOffset = (start) => {
+    const startDate = new Date(start);
+    const minutes = startDate.getMinutes();
+    return (minutes / 60) * 60; // 60px por hora
+  };
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekEnd = addDays(weekStart, 6);
@@ -48,17 +62,17 @@ const WeeklySchedule = () => {
     };
   });
 
-  // Agrupamos las reservas correctamente con fecha y hora
-  const grouped = reservations.reduce((acc, r) => {
-    if (!r.start) return acc;
+  // Agrupamos las reservas por día y hora
+  const groupedReservations = reservations.reduce((acc, reservation) => {
+    if (!reservation.start) return acc;
     
-    const reservationDate = new Date(r.start);
+    const reservationDate = new Date(reservation.start);
     const dayKey = format(reservationDate, 'yyyy-MM-dd');
-    const hourKey = format(reservationDate, 'HH:00'); // Redondea a la hora completa
+    const hourKey = format(reservationDate, 'HH:00'); // Agrupamos por hora redondeada
     
     acc[dayKey] = acc[dayKey] || {};
     acc[dayKey][hourKey] = acc[dayKey][hourKey] || [];
-    acc[dayKey][hourKey].push(r);
+    acc[dayKey][hourKey].push(reservation);
     
     return acc;
   }, {});
@@ -94,20 +108,29 @@ const WeeklySchedule = () => {
           <div key={day.date.toString()} className="day-column">
             <div className="day-header">{day.label}</div>
             {timeSlots.map(t => {
-              const d = format(day.date, 'yyyy-MM-dd'); // 'yyyy-MM-dd' para el día
-              const h = format(t, 'HH:mm'); // 'HH:mm' para la hora
-              const slot = grouped[d]?.[h] || []; // Obtenemos las reservas agrupadas para el día y hora
+              const dayKey = format(day.date, 'yyyy-MM-dd');
+              const hourKey = format(t, 'HH:00');
+              const slotReservations = groupedReservations[dayKey]?.[hourKey] || [];
+              
               return (
-                <div key={`${d}-${h}`} className="time-cell">
-                  {slot.length > 0 ? (
-                    slot.map(r => (
-                      <div key={r.reservationCode} className="reservation-block">
-                        {r.reservationCode}
+                <div key={`${dayKey}-${hourKey}`} className="time-cell">
+                  {slotReservations.map(r => (
+                    <div 
+                      key={r.reservationCode}
+                      className="reservation-block"
+                      style={{
+                        height: `${calculateDurationHeight(r.start, r.end)}px`,
+                        top: `${calculatePositionOffset(r.start)}px`
+                      }}
+                    >
+                      <div className="reservation-content">
+                        <span className="reservation-code">{r.reservationCode}</span>
+                        <span className="reservation-time">
+                          {format(new Date(r.start), 'HH:mm')} - {format(new Date(r.end), 'HH:mm')}
+                        </span>
                       </div>
-                    ))
-                  ) : (
-                    <div className="no-reservation">Sin reservas</div>
-                  )}
+                    </div>
+                  ))}
                 </div>
               );
             })}
