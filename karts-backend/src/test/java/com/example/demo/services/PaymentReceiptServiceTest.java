@@ -117,10 +117,6 @@ class PaymentReceiptServiceTest {
     }
 
 
-
-
-
-
     @Test
     void whenGetAllReceipts_thenReturnListOfReceipts() {
         // Given
