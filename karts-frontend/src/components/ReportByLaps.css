@@ -1,42 +1,136 @@
 .report-container {
-    padding: 1rem;
-  }
-  
-  .input-group {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-  }
-  
-  .date-input {
-    padding: 0.3rem;
-  }
-  
-  .load-button {
-    padding: 0.3rem 0.6rem;
-    cursor: pointer;
-  }
-  
-  .report-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 1rem;
-  }
-  
-  .report-table th,
-  .report-table td {
-    border: 1px solid #ccc;
-    padding: 0.5rem;
-    text-align: right;
-  }
-  
-  .report-table th:first-child,
-  .report-table td:first-child {
-    text-align: left;
-  }
-  
-  .total-row {
-    font-weight: bold;
-    background: #f0f0f0;
-  }
-  
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.date-form {
+  background: #f5f5f5;
+  padding: 15px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+}
+
+.input-group {
+  display: flex;
+  gap: 15px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.date-input-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.date-input {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.load-button {
+  padding: 8px 15px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.load-button:disabled {
+  background-color: #cccccc;
+}
+
+.error-message {
+  color: #d32f2f;
+  margin: 10px 0;
+  padding: 10px;
+  background-color: #fde0e0;
+  border-radius: 4px;
+}
+
+.report-results {
+  margin-top: 20px;
+}
+
+.date-display {
+  margin-bottom: 20px;
+  color: #555;
+}
+
+.report-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.report-section {
+  background: white;
+  padding: 15px;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.categories-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.categories-list li {
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.categories-list li:last-child {
+  border-bottom: none;
+}
+
+.total-section {
+  background: #e8f5e9;
+  padding: 15px;
+  border-radius: 5px;
+  text-align: center;
+}
+
+.total-amount {
+  font-size: 1.5em;
+  font-weight: bold;
+  margin: 10px 0 0;
+}
+
+.raw-data {
+  white-space: pre-wrap;
+  font-family: monospace;
+  background: #f5f5f5;
+  padding: 10px;
+  border-radius: 4px;
+}
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.report-table th,
+.report-table td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: right;
+}
+
+.report-table th {
+  background-color: #f0f0f0;
+  text-align: left;
+}
+
+.report-table tfoot {
+  background-color: #ddd;
+}
+
+.report-table td:first-child,
+.report-table th:first-child {
+  text-align: left;
+}

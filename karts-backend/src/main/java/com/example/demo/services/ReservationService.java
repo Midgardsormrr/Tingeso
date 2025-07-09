@@ -66,7 +66,40 @@ public class ReservationService {
             throw new RuntimeException("Número de personas inválido (1 a 15 permitido)");
         }
 
-        // Obtener duración total según número de vueltas
+        // Validar cantidad de RUTs
+        if (reservation.getClientRuts() == null || reservation.getClientRuts().isEmpty()) {
+            throw new RuntimeException("No ingresaste ningún RUT");
+        }
+
+        if (reservation.getClientRuts().size() != reservation.getNumberOfPeople()) {
+            throw new RuntimeException("La cantidad de RUTs debe coincidir con el número de personas");
+        }
+
+        // Validar existencia de los RUTs (clientes)
+        List<String> clientRuts = reservation.getClientRuts();
+        List<ClientEntity> clientsInDb = clientRepository.findByRutIn(clientRuts);
+        if (clientsInDb.size() != clientRuts.size()) {
+            throw new RuntimeException("Uno o más RUTs no están registrados en el sistema");
+        }
+
+        // Validar que haya karts asociados
+        if (reservation.getKartCodes() == null || reservation.getKartCodes().isEmpty()) {
+            throw new RuntimeException("No ingresaste ningún código de kart");
+        }
+
+        // Validar cantidad de karts igual a personas
+        if (reservation.getKartCodes().size() != reservation.getNumberOfPeople()) {
+            throw new RuntimeException("La cantidad de karts debe coincidir con el número de personas");
+        }
+
+        // Validar disponibilidad de los karts
+        List<String> kartCodes = reservation.getKartCodes();
+        List<KartEntity> availableKarts = kartRepository.findByCodeInAndStatus(kartCodes, "AVAILABLE");
+        if (availableKarts.size() != kartCodes.size()) {
+            throw new RuntimeException("Uno o más karts no están disponibles");
+        }
+
+        // Calcular duración de la reserva
         Integer totalDuration = pricingRepository.getTotalDurationByLaps(reservation.getLaps());
         if (totalDuration == null) {
             throw new RuntimeException("No hay configuración de precio para esa cantidad de vueltas");
@@ -75,7 +108,7 @@ public class ReservationService {
         LocalDateTime start = reservation.getStartDateTime();
         LocalDateTime end = start.plusMinutes(totalDuration);
 
-        // Validar rango horario permitido
+        // Validar horario permitido
         DayOfWeek day = start.getDayOfWeek();
         LocalTime startTime = start.toLocalTime();
         LocalTime openingTime = (day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY)
@@ -87,7 +120,7 @@ public class ReservationService {
             throw new RuntimeException("Reserva fuera del horario permitido");
         }
 
-        // Validar colisión de horarios
+        // Validar colisión de reservas
         List<ReservationEntity> conflictingReservations =
                 reservationRepository.findByStartDateTimeLessThanAndEndDateTimeGreaterThan(end, start);
 
@@ -95,29 +128,7 @@ public class ReservationService {
             throw new RuntimeException("Horario no disponible. Hay otra reserva que se superpone.");
         }
 
-        // Validar existencia de los RUTs (clientes)
-        if ((reservation.getClientRuts() == null) || reservation.getClientRuts().isEmpty()) {
-            throw new RuntimeException("No ingresaste ningun rut");
-        }
-
-        List<String> clientRuts = reservation.getClientRuts();
-        List<ClientEntity> clientsInDb = clientRepository.findByRutIn(clientRuts);
-        if (clientsInDb.size() != clientRuts.size()) {
-            throw new RuntimeException("Uno o más RUTs no están registrados en el sistema.");
-        }
-
-        // Validar estado de los karts
-        if (reservation.getKartCodes() == null || reservation.getKartCodes().isEmpty()) {
-            throw new RuntimeException("No ingresaste ningún kart");
-        }
-
-        List<String> kartCodes = reservation.getKartCodes();
-        List<KartEntity> availableKarts = kartRepository.findByCodeInAndStatus(kartCodes, "AVAILABLE");
-        if (availableKarts.size() != kartCodes.size()) {
-            throw new RuntimeException("Uno o más karts no están disponibles");
-        }
-
-        // Crear y guardar reserva
+        // Crear reserva
         ReservationEntity new_reservation = new ReservationEntity();
         new_reservation.setStartDateTime(start);
         new_reservation.setEndDateTime(end);
@@ -128,13 +139,14 @@ public class ReservationService {
         new_reservation.setKartCodes(reservation.getKartCodes());
         new_reservation.setReservationCode("RES-" + LocalDateTime.now().toLocalDate() + "-K" + (int)(Math.random() * 1000));
 
-        // Devolver el recibo como respuesta (contiene datos de reserva y detalles de pago)
+        // Guardar reserva y generar recibo
         reservationRepository.save(new_reservation);
-
         PaymentReceiptEntity receipt = paymentReceiptService.generateReceipt(new_reservation);
         paymentReceiptRepository.save(receipt);
+
         return new_reservation;
     }
+
 
     public Map<String, Map<YearMonth, Long>> generateRevenueReport(LocalDate startDate, LocalDate endDate) {
         List<ReservationEntity> reservations = reservationRepository

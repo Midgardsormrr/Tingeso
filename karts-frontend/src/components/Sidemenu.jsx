@@ -66,7 +66,7 @@ export default function Sidemenu({ open, toggleDrawer }) {
         {/* Report */}
         <ListItemButton 
           onClick={() => {
-            navigate("/reservations/report");
+            navigate("/reservations/report/by-laps");
             toggleDrawer(false);
           }}
         >

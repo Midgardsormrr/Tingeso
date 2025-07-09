@@ -1,105 +1,187 @@
-import React, { useState } from 'react';
-import { parseISO, format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import React, { useState, useEffect } from 'react';
 import { getRevenueReport } from '../services/report.service';
-import './ReportByLaps.css';
 
 const ReportByLaps = () => {
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate]     = useState('');
-  const [report, setReport]       = useState(null);
-  const [loading, setLoading]     = useState(false);
-  const [error, setError]         = useState(null);
+  const [dates, setDates] = useState({
+    start: '',
+    end: ''
+  });
+  const [report, setReport] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [displayDates, setDisplayDates] = useState({
+    start: '',
+    end: ''
+  });
 
-  const loadReport = async (e) => {
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
+
+  useEffect(() => {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+    const startDate = firstDay.toISOString().split('T')[0];
+    const endDate = lastDay.toISOString().split('T')[0];
+
+    setDates({ start: startDate, end: endDate });
+    setDisplayDates({ start: formatDate(startDate), end: formatDate(endDate) });
+  }, []);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('⏳ loadReport start', { startDate, endDate });
+
+    if (!dates.start || !dates.end) {
+      setError("Ambas fechas son requeridas");
+      return;
+    }
+
     setLoading(true);
     setError(null);
+
     try {
-      const data = await getRevenueReport(startDate, endDate);
-      console.log('✅ servicio devolvió:', data);
+      const data = await getRevenueReport(new Date(dates.start), new Date(dates.end));
+
+      if (!data || Object.keys(data).length === 0) {
+        throw new Error("No se encontraron datos para el período seleccionado");
+      }
+
       setReport(data);
-    } catch (e) {
-      console.error('❌ error al cargar reporte:', e);
-      setError('Error al cargar el reporte');
-      setReport(null);
+      setDisplayDates({
+        start: formatDate(dates.start),
+        end: formatDate(dates.end)
+      });
+    } catch (err) {
+      setError(err.message || "Error al cargar el reporte");
     } finally {
       setLoading(false);
     }
   };
 
-  // ¿ya tenemos datos?
-  const hasData = report && Object.keys(report).length > 0;
-
-  // extraer meses de todas las categorías
-  let months = [];
-  if (hasData) {
-    const monthSet = new Set();
-    Object.values(report).forEach(mMap => {
-      Object.keys(mMap).forEach(m => monthSet.add(m));
+  const formatCurrency = (val) => {
+    if (typeof val !== 'number') return '0';
+    return val.toLocaleString("es-CL", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
     });
-    months = Array.from(monthSet)
-      .sort()
-      .map(m => ({ key: m, label: format(parseISO(m + '-01'), 'LLLL yyyy', { locale: es }) }));
-  }
+  };
+
+  const renderTable = (data) => {
+    if (!data) return null;
+
+    const rows = typeof data === 'string' ? JSON.parse(data) : data;
+    const months = ["Enero", "Febrero", "Marzo"];
+    const rowKeys = Object.keys(rows);
+
+    const rowTotals = rowKeys.map(key =>
+      months.reduce((sum, month) => sum + (rows[key][month] || 0), 0)
+    );
+
+    const colTotals = months.map(month =>
+      rowKeys.reduce((sum, key) => sum + (rows[key][month] || 0), 0)
+    );
+
+    const grandTotal = colTotals.reduce((a, b) => a + b, 0);
+
+    return (
+      <table className="report-table">
+        <thead>
+          <tr>
+            <th>Número de vueltas o tiempo máximo permitido</th>
+            {months.map(month => <th key={month}>{month}</th>)}
+            <th>TOTAL</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rowKeys.map((key, i) => (
+            <tr key={key}>
+              <td>{key}</td>
+              {months.map(month => (
+                <td key={month}>{formatCurrency(rows[key][month] || 0)}</td>
+              ))}
+              <td><strong>{formatCurrency(rowTotals[i])}</strong></td>
+            </tr>
+          ))}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td><strong>TOTAL</strong></td>
+            {colTotals.map((total, i) => (
+              <td key={i}><strong>{formatCurrency(total)}</strong></td>
+            ))}
+            <td><strong>{formatCurrency(grandTotal)}</strong></td>
+          </tr>
+        </tfoot>
+      </table>
+    );
+  };
 
   return (
     <div className="report-container">
-      <h2 className="report-header">Reporte por Vueltas</h2>
+      <h1>Reporte de Ingresos</h1>
 
-      <form onSubmit={loadReport} className="input-group">
-        <input
-          type="date"
-          value={startDate}
-          onChange={e => setStartDate(e.target.value)}
-          className="date-input"
-        />
-        <input
-          type="date"
-          value={endDate}
-          onChange={e => setEndDate(e.target.value)}
-          className="date-input"
-        />
-        <button type="submit" className="load-button">
-          {loading ? 'Cargando...' : 'Cargar Reporte'}
-        </button>
+      <form onSubmit={handleSubmit} className="date-form">
+        <div className="input-group">
+          <div className="date-input-container">
+            <label>Fecha Inicio:</label>
+            <input
+              type="date"
+              className="date-input"
+              value={dates.start}
+              onChange={(e) => setDates({ ...dates, start: e.target.value })}
+            />
+          </div>
+
+          <div className="date-input-container">
+            <label>Fecha Fin:</label>
+            <input
+              type="date"
+              className="date-input"
+              value={dates.end}
+              onChange={(e) => setDates({ ...dates, end: e.target.value })}
+            />
+          </div>
+
+          <button type="submit" className="load-button" disabled={loading}>
+            {loading ? 'Cargando...' : 'Generar Reporte'}
+          </button>
+        </div>
       </form>
 
-      {error && <p className="error">{error}</p>}
+      {error && <div className="error-message">{error}</div>}
 
-      {/* siempre mostramos el JSON para debug */}
-      <pre style={{ background: '#f7f7f7', padding: '0.5rem' }}>
-        {JSON.stringify(report, null, 2)}
-      </pre>
+      {report && (
+        <div className="report-results">
+          <h2>Resultados:</h2>
+          <div className="date-display">
+            <p>Fecha Inicio: {displayDates.start}</p>
+            <p>Fecha Fin: {displayDates.end}</p>
+          </div>
 
-      {hasData && (
-        <table className="report-table">
-          <thead>
-            <tr>
-              <th>Categoría</th>
-              {months.map(m => <th key={m.key}>{m.label}</th>)}
-              <th>TOTAL</th>
-            </tr>
-          </thead>
-          <tbody>
-            {Object.entries(report).map(([cat, mMap]) => {
-              const rowTotal = months.reduce((sum, m) => sum + (mMap[m.key]||0), 0);
-              return (
-                <tr key={cat} className={cat === 'TOTAL' ? 'total-row' : ''}>
-                  <td className="category-cell">{cat}</td>
-                  {months.map(m => (
-                    <td key={m.key}>{(mMap[m.key]||0).toLocaleString('es-CL')}</td>
-                  ))}
-                  <td>{rowTotal.toLocaleString('es-CL')}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+          <div className="report-sections">
+            {report.rows && (
+              <div className="report-section">
+                <h3>Ingresos por categoría y mes</h3>
+                {renderTable(report.rows)}
+              </div>
+            )}
+
+            {report.TOTAL !== undefined && (
+              <div className="total-section">
+                <h3>TOTAL GENERAL</h3>
+                <p className="total-amount">{formatCurrency(report.TOTAL)}</p>
+              </div>
+            )}
+          </div>
+        </div>
       )}
-
-      {!hasData && !loading && <p className="no-data">No hay datos para mostrar</p>}
     </div>
   );
 };
